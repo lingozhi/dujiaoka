@@ -23,6 +23,15 @@ echo "🔐 设置文件权限..."
 chmod -R 755 /app/storage
 chmod -R 755 /app/bootstrap/cache
 
+# 修复 Nginx 端口配置 - Railway 需要监听 $PORT
+RAILWAY_PORT=${PORT:-80}
+echo "🔧 配置 Nginx 监听端口: $RAILWAY_PORT"
+sed -i "s/listen 80 default_server;/listen $RAILWAY_PORT default_server;/g" /opt/docker/etc/nginx/vhost.common.d/10-location-root.conf 2>/dev/null || true
+sed -i "s/listen 80;/listen $RAILWAY_PORT;/g" /opt/docker/etc/nginx/vhost.conf 2>/dev/null || true
+find /opt/docker/etc/nginx -type f -name "*.conf" -exec sed -i "s/listen 80 /listen $RAILWAY_PORT /g" {} \; 2>/dev/null || true
+find /opt/docker/etc/nginx -type f -name "*.conf" -exec sed -i "s/listen 80;/listen $RAILWAY_PORT;/g" {} \; 2>/dev/null || true
+echo "✅ Nginx 端口配置完成"
+
 # 调试：输出数据库配置信息
 echo "=========================================="
 echo "🔍 数据库配置调试信息"
