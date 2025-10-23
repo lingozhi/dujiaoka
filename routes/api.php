@@ -13,6 +13,8 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
-});
+// 注释掉闭包路由，避免 route:cache 失败
+// 如果需要此功能，请创建控制器方法替代
+// Route::middleware('auth:api')->get('/user', function (Request $request) {
+//     return $request->user();
+// });

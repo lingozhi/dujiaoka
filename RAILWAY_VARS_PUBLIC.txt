@@ -1,0 +1,48 @@
+# ==========================================
+# Railway 环境变量配置 - 使用公网连接
+# 更简单直接，适合快速部署
+# ==========================================
+
+# ---------- 基础应用配置 ----------
+APP_NAME=独角数卡
+APP_ENV=production
+APP_KEY=base64:hDVkYhfkUjaePiaI1tcBT7G8bh2A8RQxwWIGkq7BO18=
+APP_DEBUG=false
+APP_URL=https://dujiaoka-production-1f88.up.railway.app
+LOG_CHANNEL=stack
+
+# ---------- 数据库配置（使用公网地址）----------
+DB_CONNECTION=mysql
+DB_HOST=yamanote.proxy.rlwy.net
+DB_PORT=59325
+DB_DATABASE=railway
+DB_USERNAME=root
+DB_PASSWORD=xnpMbYdjNkfYSRljymEkrJUimzZBQiRZ
+
+# ---------- Redis 配置（使用公网地址）----------
+# 请从 Railway Redis 服务中找到公网地址，格式类似：
+# xxxxx.proxy.rlwy.net:12345
+REDIS_HOST=【需要填写 Redis 的公网主机地址】
+REDIS_PORT=【需要填写 Redis 的公网端口】
+REDIS_PASSWORD=uyHHIOPBMBaysbXxKIhxVNgzZTbqONEs
+
+# ---------- 缓存和队列配置 ----------
+CACHE_DRIVER=redis
+QUEUE_CONNECTION=redis
+SESSION_DRIVER=file
+SESSION_LIFETIME=120
+BROADCAST_DRIVER=log
+
+# ---------- 后台管理配置 ----------
+DUJIAO_ADMIN_LANGUAGE=zh_CN
+ADMIN_ROUTE_PREFIX=/admin
+ADMIN_HTTPS=true
+
+# ==========================================
+# 如何找到 Redis 公网地址：
+# 1. 在 Railway 项目中点击 Redis 服务
+# 2. 进入 "Connect" 或 "Settings" 标签
+# 3. 找到 "Public Networking" 或类似选项
+# 4. 复制公网地址，格式类似：xxxxx.proxy.rlwy.net:12345
+# 5. 将主机和端口分别填入上面的 REDIS_HOST 和 REDIS_PORT
+# ==========================================

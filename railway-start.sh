@@ -127,16 +127,23 @@ fi
 
 # 清除缓存
 echo "🧹 清除旧缓存..."
-php artisan cache:clear || true
-php artisan config:clear || true
-php artisan route:clear || true
-php artisan view:clear || true
+php artisan cache:clear 2>/dev/null || true
+php artisan config:clear 2>/dev/null || true
+php artisan route:clear 2>/dev/null || true
+php artisan view:clear 2>/dev/null || true
 
 # 优化应用
 echo "⚡ 优化应用性能..."
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+php artisan config:cache 2>/dev/null || echo "⚠️  配置缓存失败，跳过"
+
+# 路由缓存可能失败（如果使用了闭包路由），不是致命问题
+if php artisan route:cache 2>/dev/null; then
+    echo "✅ 路由缓存成功"
+else
+    echo "⚠️  路由缓存失败（路由中可能使用了闭包），跳过"
+fi
+
+php artisan view:cache 2>/dev/null || echo "⚠️  视图缓存失败，跳过"
 
 # 创建存储链接
 if [ ! -L /app/public/storage ]; then
