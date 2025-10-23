@@ -23,6 +23,31 @@ echo "🔐 设置文件权限..."
 chmod -R 755 /app/storage
 chmod -R 755 /app/bootstrap/cache
 
+# 调试：输出数据库配置信息
+echo "=========================================="
+echo "🔍 数据库配置调试信息"
+echo "=========================================="
+echo "DB_CONNECTION=${DB_CONNECTION}"
+echo "DB_HOST=${DB_HOST}"
+echo "DB_PORT=${DB_PORT}"
+echo "DB_DATABASE=${DB_DATABASE}"
+echo "DB_USERNAME=${DB_USERNAME}"
+echo "DB_PASSWORD=${DB_PASSWORD:0:5}***（已隐藏）"
+echo ""
+echo "Redis 配置："
+echo "REDIS_HOST=${REDIS_HOST}"
+echo "REDIS_PORT=${REDIS_PORT}"
+echo "REDIS_PASSWORD=${REDIS_PASSWORD:0:5}***（已隐藏）"
+echo ""
+echo "Railway 变量检查："
+echo "MYSQLHOST=${MYSQLHOST}"
+echo "MYSQLPORT=${MYSQLPORT}"
+echo "MYSQLDATABASE=${MYSQLDATABASE}"
+echo "MYSQLUSER=${MYSQLUSER}"
+echo "MYSQL_URL=${MYSQL_URL:0:30}...（已截断）"
+echo "=========================================="
+echo ""
+
 # 等待数据库就绪
 echo "🔍 等待数据库连接..."
 MAX_TRIES=30
@@ -30,30 +55,45 @@ COUNTER=0
 
 # 使用 PHP 脚本测试数据库连接（兼容 Laravel 6）
 while [ $COUNTER -lt $MAX_TRIES ]; do
-    if php -r "
+    ERROR_MSG=$(php -r "
         require '/app/vendor/autoload.php';
         \$app = require_once '/app/bootstrap/app.php';
         \$kernel = \$app->make(Illuminate\Contracts\Console\Kernel::class);
         \$kernel->bootstrap();
         try {
-            DB::connection()->getPdo();
+            \$pdo = DB::connection()->getPdo();
+            echo 'SUCCESS';
             exit(0);
         } catch (Exception \$e) {
+            echo \$e->getMessage();
             exit(1);
         }
-    " 2>/dev/null; then
+    " 2>&1)
+
+    if [ $? -eq 0 ]; then
         echo "✅ 数据库连接成功！"
         break
     fi
 
     COUNTER=$((COUNTER+1))
+    if [ $COUNTER -eq 1 ] || [ $COUNTER -eq 15 ] || [ $COUNTER -eq 30 ]; then
+        echo "⚠️  连接失败原因: $ERROR_MSG"
+    fi
     echo "⏳ 数据库尚未就绪，等待中... ($COUNTER/$MAX_TRIES)"
     sleep 2
 done
 
 if [ $COUNTER -eq $MAX_TRIES ]; then
-    echo "❌ 数据库连接超时，请检查数据库配置！"
-    echo "DEBUG: DB_HOST=${DB_HOST}, DB_DATABASE=${DB_DATABASE}, DB_USERNAME=${DB_USERNAME}"
+    echo "=========================================="
+    echo "❌ 数据库连接超时！"
+    echo "=========================================="
+    echo "最后一次错误: $ERROR_MSG"
+    echo ""
+    echo "请检查："
+    echo "1. MySQL 服务是否正在运行"
+    echo "2. 环境变量是否正确配置"
+    echo "3. 网络连接是否正常"
+    echo "=========================================="
     exit 1
 fi
 

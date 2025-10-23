@@ -1,0 +1,59 @@
+# ==========================================
+# Railway 环境变量配置 - 使用 URL 方式
+# 如果使用独立变量方式失败，试试这个方案
+# ==========================================
+
+# ---------- 基础应用配置 ----------
+APP_NAME=独角数卡
+APP_ENV=production
+APP_KEY=base64:hDVkYhfkUjaePiaI1tcBT7G8bh2A8RQxwWIGkq7BO18=
+APP_DEBUG=false
+APP_URL=https://dujiaoka-production-1f88.up.railway.app
+LOG_CHANNEL=stack
+
+# ---------- 数据库配置（使用 URL）----------
+# Railway 会自动提供 MYSQL_URL，格式如：
+# mysql://root:password@host:port/database
+DATABASE_URL=${{MYSQL_URL}}
+
+# 或者手动填写（从 Railway MySQL 服务的 Variables 中复制）
+# 示例：DATABASE_URL=mysql://root:xnpMbYdjNkfYSRljymEkrJUimzZBQiRZ@mysql.railway.internal:3306/railway
+
+# 同时还需要保留这些（Laravel 6 需要）
+DB_CONNECTION=mysql
+DB_HOST=
+DB_PORT=3306
+DB_DATABASE=railway
+DB_USERNAME=root
+DB_PASSWORD=
+
+# ---------- Redis 配置（使用 URL）----------
+# Railway 会自动提供 REDIS_URL
+REDIS_URL=${{REDIS_URL}}
+
+# 或者手动填写
+# 示例：REDIS_URL=redis://default:uyHHIOPBMBaysbXxKIhxVNgzZTbqONEs@redis.railway.internal:6379
+
+# 同时保留这些
+REDIS_HOST=
+REDIS_PASSWORD=
+REDIS_PORT=6379
+
+# ---------- 缓存和队列配置 ----------
+CACHE_DRIVER=redis
+QUEUE_CONNECTION=redis
+SESSION_DRIVER=file
+SESSION_LIFETIME=120
+BROADCAST_DRIVER=log
+
+# ---------- 后台管理配置 ----------
+DUJIAO_ADMIN_LANGUAGE=zh_CN
+ADMIN_ROUTE_PREFIX=/admin
+ADMIN_HTTPS=true
+
+# ==========================================
+# 说明：
+# 1. DATABASE_URL 和 REDIS_URL 是 Railway 自动提供的
+# 2. 这种方式更简单，但需要修改 Laravel 配置来解析 URL
+# 3. 如果这个也不行，请提供部署日志的调试信息
+# ==========================================
