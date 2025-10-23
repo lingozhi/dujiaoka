@@ -1,0 +1,63 @@
+# ==========================================
+# Railway 环境变量配置清单
+# 请在 Railway Variables 页面逐个添加以下变量
+# ==========================================
+
+# 复制下面每一行的 变量名=值 到 Railway
+
+APP_NAME=独角数卡
+
+APP_ENV=production
+
+APP_KEY=base64:hDVkYhfkUjaePiaI1tcBT7G8bh2A8RQxwWIGkq7BO18=
+
+APP_DEBUG=false
+
+APP_URL=https://dujiaoka-production-1f88.up.railway.app
+
+LOG_CHANNEL=stack
+
+DB_CONNECTION=mysql
+
+DB_HOST=${{RAILWAY_PRIVATE_DOMAIN}}
+
+DB_PORT=3306
+
+DB_DATABASE=railway
+
+DB_USERNAME=root
+
+DB_PASSWORD=xnpMbYdjNkfYSRljymEkrJUimzZBQiRZ
+
+REDIS_HOST=${{RAILWAY_PRIVATE_DOMAIN}}
+
+REDIS_PASSWORD=uyHHIOPBMBaysbXxKIhxVNgzZTbqONEs
+
+REDIS_PORT=6379
+
+CACHE_DRIVER=redis
+
+QUEUE_CONNECTION=redis
+
+SESSION_DRIVER=file
+
+SESSION_LIFETIME=120
+
+BROADCAST_DRIVER=log
+
+DUJIAO_ADMIN_LANGUAGE=zh_CN
+
+ADMIN_ROUTE_PREFIX=/admin
+
+ADMIN_HTTPS=true
+
+# ==========================================
+# 配置完成后的检查清单
+# ==========================================
+# ✅ 确认 APP_ENV=production
+# ✅ 确认 APP_DEBUG=false
+# ✅ 确认 APP_URL 是你的域名
+# ✅ 确认 ADMIN_HTTPS=true
+# ✅ 确认 DB_HOST 和 REDIS_HOST 使用 ${{RAILWAY_PRIVATE_DOMAIN}}
+# ✅ 确认数据库密码和 Redis 密码正确
+# ==========================================

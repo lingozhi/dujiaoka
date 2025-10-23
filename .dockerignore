@@ -1,0 +1,59 @@
+# Git 相关
+.git
+.gitignore
+.gitattributes
+
+# 开发工具
+.vscode
+.idea
+*.code-workspace
+
+# 文档
+*.md
+!README.md
+
+# 测试
+tests
+phpunit.xml
+.phpunit.result.cache
+
+# Node.js
+node_modules
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# 环境文件
+.env
+.env.*
+!.env.example
+
+# 临时文件
+*.log
+*.tmp
+*.cache
+.DS_Store
+Thumbs.db
+
+# Storage 目录（运行时生成）
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+bootstrap/cache/*
+
+# Composer 开发依赖
+vendor/bin/phpunit
+vendor/phpunit
+vendor/mockery
+vendor/fakerphp
+vendor/facade
+
+# 其他
+.editorconfig
+.php_cs
+.php_cs.cache
+.styleci.yml
+docker-compose.yml
+Dockerfile.dev
