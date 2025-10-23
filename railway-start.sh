@@ -226,4 +226,17 @@ echo ""
 
 # 启动 supervisord（包含 PHP-FPM 和 Nginx）
 echo "🌐 启动 Web 服务器..."
-exec supervisord -n -c /opt/docker/etc/supervisor.conf
+supervisord -c /opt/docker/etc/supervisor.conf &
+SUPERVISOR_PID=$!
+
+# 等待 supervisord 启动
+sleep 3
+
+# 重新加载 Nginx 配置
+echo "🔄 重新加载 Nginx 配置..."
+nginx -s reload 2>/dev/null || supervisorctl reload nginx 2>/dev/null || true
+
+echo "✅ 服务启动完成"
+
+# 保持进程运行
+wait $SUPERVISOR_PID
