@@ -21,11 +21,18 @@ mkdir -p /app/storage/framework/cache
 mkdir -p /app/storage/framework/sessions
 mkdir -p /app/storage/framework/views
 mkdir -p /app/bootstrap/cache
+mkdir -p /var/log/nginx
+mkdir -p /var/log/php
 
 # 设置权限
 echo "🔐 设置文件权限..."
 chmod -R 755 /app/storage
 chmod -R 755 /app/bootstrap/cache
+
+# 修复 webdevops 占位符
+echo "🔧 修复 Nginx 占位符..."
+find /opt/docker/etc/nginx -type f -name "*.conf" -exec sed -i 's/<PHP_SOCKET>/127.0.0.1:9000/g' {} \;
+echo "✅ 占位符修复完成"
 
 # 动态生成 Nginx 配置
 RAILWAY_PORT=${PORT:-80}
