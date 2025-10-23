@@ -27,7 +27,25 @@ chmod -R 755 /app/bootstrap/cache
 echo "🔍 等待数据库连接..."
 MAX_TRIES=30
 COUNTER=0
-until php artisan db:show 2>/dev/null || [ $COUNTER -eq $MAX_TRIES ]; do
+
+# 使用 PHP 脚本测试数据库连接（兼容 Laravel 6）
+while [ $COUNTER -lt $MAX_TRIES ]; do
+    if php -r "
+        require '/app/vendor/autoload.php';
+        \$app = require_once '/app/bootstrap/app.php';
+        \$kernel = \$app->make(Illuminate\Contracts\Console\Kernel::class);
+        \$kernel->bootstrap();
+        try {
+            DB::connection()->getPdo();
+            exit(0);
+        } catch (Exception \$e) {
+            exit(1);
+        }
+    " 2>/dev/null; then
+        echo "✅ 数据库连接成功！"
+        break
+    fi
+
     COUNTER=$((COUNTER+1))
     echo "⏳ 数据库尚未就绪，等待中... ($COUNTER/$MAX_TRIES)"
     sleep 2
@@ -35,10 +53,9 @@ done
 
 if [ $COUNTER -eq $MAX_TRIES ]; then
     echo "❌ 数据库连接超时，请检查数据库配置！"
+    echo "DEBUG: DB_HOST=${DB_HOST}, DB_DATABASE=${DB_DATABASE}, DB_USERNAME=${DB_USERNAME}"
     exit 1
 fi
-
-echo "✅ 数据库连接成功！"
 
 # 检查是否首次部署（通过检查 migrations 表是否存在）
 echo "🔍 检查部署状态..."
