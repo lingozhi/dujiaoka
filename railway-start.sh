@@ -27,14 +27,53 @@ echo "🔐 设置文件权限..."
 chmod -R 755 /app/storage
 chmod -R 755 /app/bootstrap/cache
 
-# 修复 Nginx 端口配置 - Railway 需要监听 $PORT
+# 动态生成 Nginx 配置
 RAILWAY_PORT=${PORT:-80}
-echo "🔧 配置 Nginx 监听端口: $RAILWAY_PORT"
-sed -i "s/listen 80 default_server;/listen $RAILWAY_PORT default_server;/g" /opt/docker/etc/nginx/vhost.common.d/10-location-root.conf 2>/dev/null || true
-sed -i "s/listen 80;/listen $RAILWAY_PORT;/g" /opt/docker/etc/nginx/vhost.conf 2>/dev/null || true
-find /opt/docker/etc/nginx -type f -name "*.conf" -exec sed -i "s/listen 80 /listen $RAILWAY_PORT /g" {} \; 2>/dev/null || true
-find /opt/docker/etc/nginx -type f -name "*.conf" -exec sed -i "s/listen 80;/listen $RAILWAY_PORT;/g" {} \; 2>/dev/null || true
-echo "✅ Nginx 端口配置完成"
+echo "🔧 生成 Nginx 配置，监听端口: $RAILWAY_PORT"
+
+cat > /opt/docker/etc/nginx/vhost.conf << EOF
+server {
+    listen $RAILWAY_PORT default_server;
+    listen [::]:$RAILWAY_PORT default_server;
+
+    server_name _;
+    root /app/public;
+    index index.php index.html;
+
+    client_max_body_size 50M;
+
+    location / {
+        try_files \$uri \$uri/ /index.php?\$query_string;
+    }
+
+    location ~ \.php$ {
+        try_files \$uri =404;
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME \$realpath_root\$fastcgi_script_name;
+        fastcgi_param DOCUMENT_ROOT \$realpath_root;
+        include fastcgi_params;
+
+        fastcgi_read_timeout 300;
+        fastcgi_send_timeout 300;
+        fastcgi_connect_timeout 60;
+        fastcgi_buffers 16 16k;
+        fastcgi_buffer_size 32k;
+    }
+
+    location ~ /\. {
+        deny all;
+    }
+
+    location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)$ {
+        expires 365d;
+        add_header Cache-Control "public, immutable";
+    }
+}
+EOF
+
+echo "✅ Nginx 配置已生成"
 
 # 调试：输出数据库配置信息
 echo "=========================================="
