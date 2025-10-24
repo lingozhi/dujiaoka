@@ -29,58 +29,21 @@ echo "🔐 设置文件权限..."
 chmod -R 755 /app/storage
 chmod -R 755 /app/bootstrap/cache
 
-# 修复 webdevops 占位符
-echo "🔧 修复 Nginx 占位符..."
-find /opt/docker/etc/nginx -type f -name "*.conf" -exec sed -i 's/<PHP_SOCKET>/127.0.0.1:9000/g' {} \;
-echo "✅ 占位符修复完成"
-
-# 动态生成 Nginx 配置
+# 修复 Nginx 配置
 RAILWAY_PORT=${PORT:-80}
-echo "🔧 生成 Nginx 配置，监听端口: $RAILWAY_PORT"
+echo "🔧 配置 Nginx（端口: $RAILWAY_PORT）..."
 
-cat > /opt/docker/etc/nginx/vhost.conf << EOF
-server {
-    listen $RAILWAY_PORT default_server;
-    listen [::]:$RAILWAY_PORT default_server;
+# 替换所有配置文件中的占位符
+find /opt/docker/etc/nginx -type f \( -name "*.conf" -o -name "*.inc" \) -exec sed -i \
+    -e "s/<PHP_SOCKET>/127.0.0.1:9000/g" \
+    -e "s/<CLIENT_MAX_BODY_SIZE>/50M/g" \
+    -e "s/<FASTCGI_READ_TIMEOUT>/300/g" \
+    {} \; 2>/dev/null || true
 
-    server_name _;
-    root /app/public;
-    index index.php index.html;
+# 替换 vhost.conf 中的端口
+sed -i "s/PORT_PLACEHOLDER/$RAILWAY_PORT/g" /opt/docker/etc/nginx/vhost.conf
 
-    client_max_body_size 50M;
-
-    location / {
-        try_files \$uri \$uri/ /index.php?\$query_string;
-    }
-
-    location ~ \.php$ {
-        try_files \$uri =404;
-        fastcgi_split_path_info ^(.+\.php)(/.+)$;
-        fastcgi_pass 127.0.0.1:9000;
-        fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME \$realpath_root\$fastcgi_script_name;
-        fastcgi_param DOCUMENT_ROOT \$realpath_root;
-        include fastcgi_params;
-
-        fastcgi_read_timeout 300;
-        fastcgi_send_timeout 300;
-        fastcgi_connect_timeout 60;
-        fastcgi_buffers 16 16k;
-        fastcgi_buffer_size 32k;
-    }
-
-    location ~ /\. {
-        deny all;
-    }
-
-    location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)$ {
-        expires 365d;
-        add_header Cache-Control "public, immutable";
-    }
-}
-EOF
-
-echo "✅ Nginx 配置已生成"
+echo "✅ Nginx 配置完成"
 
 # 调试：输出数据库配置信息
 echo "=========================================="
@@ -233,17 +196,4 @@ echo ""
 
 # 启动 supervisord（包含 PHP-FPM 和 Nginx）
 echo "🌐 启动 Web 服务器..."
-supervisord -c /opt/docker/etc/supervisor.conf &
-SUPERVISOR_PID=$!
-
-# 等待 supervisord 启动
-sleep 3
-
-# 重新加载 Nginx 配置
-echo "🔄 重新加载 Nginx 配置..."
-nginx -s reload 2>/dev/null || supervisorctl reload nginx 2>/dev/null || true
-
-echo "✅ 服务启动完成"
-
-# 保持进程运行
-wait $SUPERVISOR_PID
+exec supervisord -n -c /opt/docker/etc/supervisor.conf

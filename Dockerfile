@@ -6,6 +6,9 @@ WORKDIR /app
 # 复制项目文件
 COPY . /app
 
+# 复制并设置 Nginx 配置（使用占位符，在启动时替换）
+COPY nginx-default.conf /opt/docker/etc/nginx/vhost.conf
+
 # 安装 Composer 依赖
 RUN composer install --ignore-platform-reqs --no-dev --optimize-autoloader && \
     composer dump-autoload --optimize
