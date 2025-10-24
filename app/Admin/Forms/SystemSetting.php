@@ -17,10 +17,38 @@ class SystemSetting extends Form
      */
     public function handle(array $input)
     {
-        Cache::put('system-setting', $input);
-        return $this
-				->response()
-				->success(admin_trans('system-setting.rule_messages.save_system_setting_success'));
+        try {
+            // 确保缓存目录存在（Railway 持久化支持）
+            $cacheDir = storage_path('framework/cache/data');
+            if (!is_dir($cacheDir)) {
+                @mkdir($cacheDir, 0755, true);
+            }
+
+            // 保存配置到缓存
+            $result = Cache::put('system-setting', $input);
+
+            // 记录日志（用于调试）
+            \Log::info('System settings saved', [
+                'cache_driver' => config('cache.default'),
+                'result' => $result,
+                'mail_host' => $input['host'] ?? 'not set',
+            ]);
+
+            return $this
+                ->response()
+                ->success(admin_trans('system-setting.rule_messages.save_system_setting_success'));
+
+        } catch (\Exception $e) {
+            // 捕获异常并返回错误信息
+            \Log::error('Failed to save system settings', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return $this
+                ->response()
+                ->error('保存失败: ' . $e->getMessage());
+        }
     }
 
     /**
