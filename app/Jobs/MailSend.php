@@ -63,28 +63,31 @@ class MailSend implements ShouldQueue
         $defaults = [
             'driver' => 'smtp',
             'host' => 'smtp.feishu.cn',
-            'port' => '465',
+            'port' => '587',
             'username' => 'no-reply@opwan.ai',
             'password' => 'Y5H2MrTLzJfFUH0a',
-            'encryption' => 'ssl',
+            'encryption' => 'tls',
             'from_address' => 'no-reply@opwan.ai',
             'from_name' => '独角数卡'
         ];
 
-        // 三层后备机制，确保不会出现空值
+        // 三层后备机制：管理后台 > 环境变量 > 硬编码默认值
         $getValue = function($key, $cacheKey = null) use ($sysConfig, $defaults) {
             $cacheKey = $cacheKey ?? $key;
-            // 优先使用缓存配置
-            if (!empty($sysConfig[$cacheKey])) {
+
+            // 优先级 1: 管理后台缓存配置（只要存在就使用，即使是空字符串）
+            if (isset($sysConfig[$cacheKey]) && $sysConfig[$cacheKey] !== null && $sysConfig[$cacheKey] !== '') {
                 return $sysConfig[$cacheKey];
             }
-            // 其次使用 config 配置
+
+            // 优先级 2: 环境变量配置
             $configValue = config('mail.' . $key);
-            if (!empty($configValue)) {
+            if ($configValue !== null && $configValue !== '') {
                 return $configValue;
             }
-            // 最后使用硬编码默认值
-            return $defaults[$cacheKey];
+
+            // 优先级 3: 硬编码默认值（兜底）
+            return $defaults[$cacheKey] ?? '';
         };
 
         $mailConfig = [
