@@ -67,7 +67,7 @@ class CheckSystemConfig extends Command
             $this->line('Password: Y5H2MrTLzJfFUH0a');
             $this->line('Encryption: ssl');
             $this->line('From Address: no-reply@opwan.ai');
-            $this->line('From Name: 独角数卡');
+            $this->line('From Name: claudex');
             return 1;
         }
 
