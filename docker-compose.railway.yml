@@ -1,0 +1,25 @@
+version: "2.2"
+services:
+  web:
+    build: .
+    container_name: dujiaoka
+    ports:
+      - "80:80"
+      - "9000:9000"
+    volumes:
+      # Railway 持久化存储挂载到 /data 目录
+      # .env 配置文件
+      - /data/.env:/app/.env
+      # 安装锁文件，避免每次重启都需要重新初始化
+      - /data/install.lock:/app/install.lock
+      # 上传的资源文件（图片等）
+      - /data/uploads:/app/public/uploads
+      # 数据库文件（如果使用 SQLite）
+      - /data/database:/app/database
+      # 日志文件
+      - /data/storage:/app/storage
+    environment:
+      WEB_DOCUMENT_ROOT: "/app/public"
+      TZ: Asia/Shanghai
+    tty: true
+    restart: always

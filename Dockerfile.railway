@@ -1,0 +1,58 @@
+FROM webdevops/php-nginx:7.4
+
+# 复制应用代码
+COPY . /app
+WORKDIR /app
+
+# 安装 Composer 依赖
+RUN [ "sh", "-c", "composer install --ignore-platform-reqs" ]
+
+# 创建启动脚本
+RUN echo "#!/bin/bash\n\
+# 创建持久化目录的软链接\n\
+if [ ! -f /data/.env ]; then\n\
+    echo 'Copying default .env file...'\n\
+    cp /app/.env.example /data/.env 2>/dev/null || true\n\
+fi\n\
+ln -sf /data/.env /app/.env\n\
+\n\
+if [ -f /data/install.lock ]; then\n\
+    ln -sf /data/install.lock /app/install.lock\n\
+fi\n\
+\n\
+# 创建必要的目录\n\
+mkdir -p /data/uploads /data/storage/logs /data/storage/framework/cache /data/storage/framework/sessions /data/storage/framework/views\n\
+\n\
+# 软链接上传目录\n\
+rm -rf /app/public/uploads\n\
+ln -sf /data/uploads /app/public/uploads\n\
+\n\
+# 软链接 storage 目录\n\
+rm -rf /app/storage/logs\n\
+ln -sf /data/storage/logs /app/storage/logs\n\
+rm -rf /app/storage/framework/cache\n\
+ln -sf /data/storage/framework/cache /app/storage/framework/cache\n\
+rm -rf /app/storage/framework/sessions\n\
+ln -sf /data/storage/framework/sessions /app/storage/framework/sessions\n\
+rm -rf /app/storage/framework/views\n\
+ln -sf /data/storage/framework/views /app/storage/framework/views\n\
+\n\
+# 设置权限\n\
+chown -R application:application /data\n\
+chmod -R 775 /data\n\
+\n\
+# 启动队列工作进程\n\
+php artisan queue:work >/tmp/work.log 2>&1 &\n\
+\n\
+# 启动 supervisord\n\
+supervisord" > /app/start.sh
+
+# 设置执行权限
+RUN chmod +x /app/start.sh
+RUN [ "sh", "-c", "chmod -R 777 /app" ]
+
+# 暴露端口
+EXPOSE 80 9000
+
+# 启动命令
+CMD [ "sh", "/app/start.sh" ]
