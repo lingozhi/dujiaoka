@@ -29,17 +29,19 @@ class EmailTest extends Form
       $to = $input['to'];
       $title = $input['title'];
       $body = $input['body'];
-      $sysConfig = cache('system-setting');
+      $sysConfig = cache('system-setting', []);
+
+      // 硬编码默认配置（确保即使缓存为空也能测试）
       $mailConfig = [
           'driver' => $sysConfig['driver'] ?? 'smtp',
-          'host' => $sysConfig['host'] ?? '',
+          'host' => $sysConfig['host'] ?? 'smtp.feishu.cn',
           'port' => $sysConfig['port'] ?? '465',
-          'username' => $sysConfig['username'] ?? '',
+          'username' => $sysConfig['username'] ?? 'no-reply@opwan.ai',
           'from'      =>  [
-              'address'   =>   $sysConfig['from_address'] ?? '',
-              'name'      =>  $sysConfig['from_name'] ?? '独角发卡'
+              'address'   =>   $sysConfig['from_address'] ?? 'no-reply@opwan.ai',
+              'name'      =>  $sysConfig['from_name'] ?? '独角数卡'
           ],
-          'password' => $sysConfig['password'] ?? '',
+          'password' => $sysConfig['password'] ?? 'e4ggOjilNVagDnOn',
           'encryption' => $sysConfig['encryption'] ?? 'ssl'
       ];
       //  覆盖 mail 配置
