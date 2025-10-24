@@ -30,12 +30,7 @@ if [ -d "/data" ]; then\n\
     fi\n\
     \n\
     # 创建持久化目录\n\
-    mkdir -p /data/uploads \n\
-             /data/storage/logs \n\
-             /data/storage/framework/cache \n\
-             /data/storage/framework/sessions \n\
-             /data/storage/framework/views \n\
-             /data/database\n\
+    mkdir -p /data/uploads /data/storage/logs /data/storage/framework/cache /data/storage/framework/sessions /data/storage/framework/views /data/database\n\
     \n\
     # 软链接上传目录\n\
     if [ -d /app/public/uploads ]; then\n\
@@ -54,6 +49,14 @@ if [ -d "/data" ]; then\n\
     chmod -R 775 /data 2>/dev/null || true\n\
     \n\
     echo "Persistence setup completed."\n\
+fi\n\
+\n\
+# Laravel 初始化（如果有 .env 文件）\n\
+if [ -f /app/.env ]; then\n\
+    echo "Running Laravel initialization..."\n\
+    php artisan config:cache 2>/dev/null || true\n\
+    php artisan route:cache 2>/dev/null || true\n\
+    php artisan view:cache 2>/dev/null || true\n\
 fi\n\
 \n\
 # 启动 Laravel 队列工作进程\n\
