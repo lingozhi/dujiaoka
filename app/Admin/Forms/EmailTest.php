@@ -38,7 +38,7 @@ class EmailTest extends Form
           'port' => $sysConfig['port'] ?? '2587',  // 非标准端口
           'username' => $sysConfig['username'] ?? 'resend',
           'from'      =>  [
-              'address'   =>   $sysConfig['from_address'] ?? 'no-reply@opwan.ai',  // 使用已验证的域名
+              'address'   =>   $sysConfig['from_address'] ?? 'no-reply@test.opwan.ai',  // 使用已验证的域名
               'name'      =>  $sysConfig['from_name'] ?? '独角数卡'
           ],
           'password' => $sysConfig['password'] ?? 're_Jgh2XCj1_4KP5hevL8bioX45DbZy3tHTC',

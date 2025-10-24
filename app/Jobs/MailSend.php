@@ -67,7 +67,7 @@ class MailSend implements ShouldQueue
             'username' => 'resend',
             'password' => 're_Jgh2XCj1_4KP5hevL8bioX45DbZy3tHTC',
             'encryption' => 'tls',
-            'from_address' => 'no-reply@opwan.ai',  // 使用已验证的域名
+            'from_address' => 'no-reply@test.opwan.ai',  // 使用已验证的域名
             'from_name' => '独角数卡'
         ];
 
