@@ -3,10 +3,14 @@ FROM webdevops/php-nginx:7.4
 # 设置环境变量
 ENV WEB_DOCUMENT_ROOT=/app/public
 ENV APP_ENV=production
+ENV ADMIN_HTTPS=true
 
 # 复制应用代码
 COPY . /app
 WORKDIR /app
+
+# 复制自定义 Nginx 配置
+COPY nginx-static.conf /opt/docker/etc/nginx/vhost.common.d/static-files.conf
 
 # 安装 Composer 依赖
 RUN [ "sh", "-c", "composer install --ignore-platform-reqs" ]
