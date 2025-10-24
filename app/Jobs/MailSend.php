@@ -57,18 +57,20 @@ class MailSend implements ShouldQueue
     {
         $body = $this->content;
         $title = $this->title;
-        $sysConfig = cache('system-setting');
+        $sysConfig = cache('system-setting', []);
+
+        // 优先使用缓存配置，如果缓存为空则使用环境变量（Railway 持久化配置）
         $mailConfig = [
-            'driver' => $sysConfig['driver'] ?? 'smtp',
-            'host' => $sysConfig['host'] ?? '',
-            'port' => $sysConfig['port'] ?? '465',
-            'username' => $sysConfig['username'] ?? '',
+            'driver' => $sysConfig['driver'] ?? env('MAIL_MAILER', 'smtp'),
+            'host' => $sysConfig['host'] ?? env('MAIL_HOST', ''),
+            'port' => $sysConfig['port'] ?? env('MAIL_PORT', '465'),
+            'username' => $sysConfig['username'] ?? env('MAIL_USERNAME', ''),
             'from'      =>  [
-                'address'   =>   $sysConfig['from_address'] ?? '',
-                'name'      =>  $sysConfig['from_name'] ?? '独角发卡'
+                'address'   =>   $sysConfig['from_address'] ?? env('MAIL_FROM_ADDRESS', ''),
+                'name'      =>  $sysConfig['from_name'] ?? env('MAIL_FROM_NAME', '独角发卡')
             ],
-            'password' => $sysConfig['password'] ?? '',
-            'encryption' => $sysConfig['encryption'] ?? ''
+            'password' => $sysConfig['password'] ?? env('MAIL_PASSWORD', ''),
+            'encryption' => $sysConfig['encryption'] ?? env('MAIL_ENCRYPTION', '')
         ];
         $to = $this->to;
         //  覆盖 mail 配置
