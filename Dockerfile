@@ -1,4 +1,44 @@
-FROM webdevops/php-nginx:7.4
+FROM php:7.4-fpm-alpine
+
+# 安装系统依赖和 Nginx
+RUN apk add --no-cache \
+    nginx \
+    bash \
+    curl \
+    vim \
+    git \
+    zip \
+    unzip \
+    libzip-dev \
+    freetype-dev \
+    libjpeg-turbo-dev \
+    libpng-dev \
+    icu-dev \
+    libxml2-dev \
+    oniguruma-dev
+
+# 安装 PHP 扩展
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) \
+        gd \
+        pdo_mysql \
+        mysqli \
+        zip \
+        intl \
+        bcmath \
+        soap \
+        mbstring \
+        pcntl \
+        opcache
+
+# 安装 Redis 扩展
+RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && apk del .build-deps
+
+# 安装 Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # 设置工作目录
 WORKDIR /app
@@ -6,26 +46,34 @@ WORKDIR /app
 # 复制项目文件
 COPY . /app
 
-# 复制并设置 Nginx 配置（使用占位符，在启动时替换）
-COPY nginx-default.conf /opt/docker/etc/nginx/vhost.conf
-
 # 安装 Composer 依赖
-RUN composer install --ignore-platform-reqs --no-dev --optimize-autoloader && \
-    composer dump-autoload --optimize
+RUN composer install --ignore-platform-reqs --no-dev --optimize-autoloader
+
+# 创建 Nginx 配置
+RUN mkdir -p /run/nginx && \
+    rm -f /etc/nginx/http.d/default.conf
+
+# 创建目录
+RUN mkdir -p \
+    /app/storage/logs \
+    /app/storage/framework/cache \
+    /app/storage/framework/sessions \
+    /app/storage/framework/views \
+    /app/bootstrap/cache \
+    /var/log/nginx \
+    /var/log/php-fpm
 
 # 设置权限
-RUN chmod +x /app/railway-start.sh && \
-    chmod +x /app/healthcheck.sh && \
-    chmod -R 755 /app/storage && \
-    chmod -R 755 /app/bootstrap/cache && \
-    chown -R application:application /app
+RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
 
-# 暴露端口
-EXPOSE 80
+# 复制 Nginx 和 PHP-FPM 配置
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
+COPY docker/start.sh /start.sh
+RUN chmod +x /start.sh
 
-# 健康检查（可选，Railway 会自动检测）
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD /app/healthcheck.sh || exit 1
+# 暴露端口由 Railway 的 $PORT 决定
+EXPOSE 8080
 
-# 使用 railway-start.sh 启动
-CMD ["/app/railway-start.sh"]
+# 启动脚本
+CMD ["/start.sh"]
