@@ -27,33 +27,32 @@
                     }
                   }'>
                                 <div class="swiper-wrapper">
-                                    <div class="swiper-slide text-center text-xl-start pt-5 py-xl-5">
+                                    <!-- <div class="swiper-slide text-center text-xl-start pt-5 py-xl-5">
                                         <p class="text-body">近期热销产品</p>
                                         <h2 class="display-4 pb-2 pb-xl-4">美区礼品卡50美刀</h2>
                                         <a class="btn btn-lg btn-dark" href="buy/1">
                                             立即 购买
                                             <i class="ci-arrow-up-right fs-lg ms-2 me-n1"></i>
                                         </a>
-                                    </div>
+                                    </div> -->
                                     <div class="swiper-slide text-center text-xl-start pt-5 py-xl-5">
-                                        <p class="text-body">Telegram社区数万人社区</p>
+                                        <!-- <p class="text-body">Telegram社区数万人社区</p> -->
                                         <h2 class="display-4 pb-2 pb-xl-4">专业售后服务</h2>
-                                        <a class="btn btn-lg btn-dark" href="https://t.me/RinibaGroup">
+                                        <!-- <a class="btn btn-lg btn-dark" href="https://t.me/RinibaGroup">
                                             加入 社区
                                             <i class="ci-arrow-up-right fs-lg ms-2 me-n1"></i>
-                                        </a>
+                                        </a> -->
                                     </div>
                                     <div class="swiper-slide text-center text-xl-start pt-5 py-xl-5">
                                         <p class="text-body">发货时间少于两分钟</p>
                                         <h2 class="display-4 pb-2 pb-xl-4">及时交货</h2>
-                                        <a class="btn btn-lg btn-dark rounded-pill"
+                                        <!-- <a class="btn btn-lg btn-dark rounded-pill"
                                             href="https://youtu.be/me_Dc5PJrXk?si=QSILRHdbjUIJ7SmV" data-glightbox
                                             data-gallery="video">
                                             <i class="ci-play fs-lg ms-n1 me-2"></i>
                                             播放 视频
-                                        </a>
+                                        </a> -->
                                     </div>
-
                                 </div>
                             </div>
                         </div>
