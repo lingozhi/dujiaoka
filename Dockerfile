@@ -24,8 +24,13 @@ if [ -d "/data" ]; then\n\
     fi\n\
     ln -sf /data/.env /app/.env\n\
     \n\
-    # 处理安装锁文件\n\
+    # 处理安装锁文件 - 双向同步\n\
     if [ -f /data/install.lock ]; then\n\
+        echo "Found existing install.lock in /data, linking to app..."\n\
+        ln -sf /data/install.lock /app/install.lock\n\
+    elif [ -f /app/install.lock ]; then\n\
+        echo "Found install.lock in app, copying to /data..."\n\
+        cp /app/install.lock /data/install.lock\n\
         ln -sf /data/install.lock /app/install.lock\n\
     fi\n\
     \n\
@@ -56,6 +61,10 @@ if [ ! -L /app/public/storage ]; then\n\
     echo "Creating storage symlink..."\n\
     php artisan storage:link 2>/dev/null || true\n\
 fi\n\
+\n\
+# 发布管理面板静态资源\n\
+echo "Publishing admin panel assets..."\n\
+php artisan admin:publish --force 2>/dev/null || true\n\
 \n\
 # Laravel 初始化（如果有 .env 文件）\n\
 if [ -f /app/.env ]; then\n\
