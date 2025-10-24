@@ -59,7 +59,7 @@ class MailSend implements ShouldQueue
         $title = $this->title;
         $sysConfig = cache('system-setting', []);
 
-        // 硬编码的默认配置（Resend 邮件服务，使用非标准端口避免 Railway 阻止）
+        // 硬编码的默认配置（Resend 邮件服务，使用已验证的域名）
         $defaults = [
             'driver' => 'smtp',
             'host' => 'smtp.resend.com',
@@ -67,7 +67,7 @@ class MailSend implements ShouldQueue
             'username' => 'resend',
             'password' => 're_Jgh2XCj1_4KP5hevL8bioX45DbZy3tHTC',
             'encryption' => 'tls',
-            'from_address' => 'onboarding@resend.dev',
+            'from_address' => 'no-reply@opwan.ai',  // 使用已验证的域名
             'from_name' => '独角数卡'
         ];
 

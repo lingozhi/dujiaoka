@@ -31,14 +31,14 @@ class EmailTest extends Form
       $body = $input['body'];
       $sysConfig = cache('system-setting', []);
 
-      // 硬编码默认配置（Resend 邮件服务，使用非标准端口避免 Railway 阻止）
+      // 硬编码默认配置（Resend 邮件服务，使用已验证的域名）
       $mailConfig = [
           'driver' => $sysConfig['driver'] ?? 'smtp',
           'host' => $sysConfig['host'] ?? 'smtp.resend.com',
           'port' => $sysConfig['port'] ?? '2587',  // 非标准端口
           'username' => $sysConfig['username'] ?? 'resend',
           'from'      =>  [
-              'address'   =>   $sysConfig['from_address'] ?? 'onboarding@resend.dev',
+              'address'   =>   $sysConfig['from_address'] ?? 'no-reply@opwan.ai',  // 使用已验证的域名
               'name'      =>  $sysConfig['from_name'] ?? '独角数卡'
           ],
           'password' => $sysConfig['password'] ?? 're_Jgh2XCj1_4KP5hevL8bioX45DbZy3tHTC',

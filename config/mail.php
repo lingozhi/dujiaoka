@@ -56,7 +56,7 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'onboarding@resend.dev'),
+        'address' => env('MAIL_FROM_ADDRESS', 'no-reply@opwan.ai'),
         'name' => env('MAIL_FROM_NAME', '独角数卡'),
     ],
 
