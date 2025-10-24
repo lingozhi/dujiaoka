@@ -1,5 +1,9 @@
 FROM webdevops/php-nginx:7.4
 
+# 设置环境变量
+ENV WEB_DOCUMENT_ROOT=/app/public
+ENV APP_ENV=production
+
 # 复制应用代码
 COPY . /app
 WORKDIR /app
