@@ -88,10 +88,9 @@ class SystemSetting extends Form
             $this->text('geetest_key', admin_trans('system-setting.fields.geetest_key'));
             $this->switch('is_open_geetest', admin_trans('system-setting.fields.is_open_geetest'))->default(BaseModel::STATUS_CLOSE);
         });
-        $this->confirm(
-            admin_trans('dujiaoka.warning_title'),
-            admin_trans('system-setting.rule_messages.change_reboot_php_worker')
-        );
+
+        // 移除有问题的 confirm 调用，修复表单提交
+        // 注意：修改系统设置后需要重启 PHP Worker 才能生效
     }
 
     public function default()
