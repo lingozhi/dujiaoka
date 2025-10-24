@@ -59,18 +59,45 @@ class MailSend implements ShouldQueue
         $title = $this->title;
         $sysConfig = cache('system-setting', []);
 
-        // 三层后备机制：1. 缓存配置 2. config配置 3. 硬编码默认值
+        // 硬编码的默认配置（作为最终兜底）
+        $defaults = [
+            'driver' => 'smtp',
+            'host' => 'smtp.feishu.cn',
+            'port' => '465',
+            'username' => 'no-reply@opwan.ai',
+            'password' => 'Y5H2MrTLzJfFUH0a',
+            'encryption' => 'ssl',
+            'from_address' => 'no-reply@opwan.ai',
+            'from_name' => '独角数卡'
+        ];
+
+        // 三层后备机制，确保不会出现空值
+        $getValue = function($key, $cacheKey = null) use ($sysConfig, $defaults) {
+            $cacheKey = $cacheKey ?? $key;
+            // 优先使用缓存配置
+            if (!empty($sysConfig[$cacheKey])) {
+                return $sysConfig[$cacheKey];
+            }
+            // 其次使用 config 配置
+            $configValue = config('mail.' . $key);
+            if (!empty($configValue)) {
+                return $configValue;
+            }
+            // 最后使用硬编码默认值
+            return $defaults[$cacheKey];
+        };
+
         $mailConfig = [
-            'driver' => $sysConfig['driver'] ?? config('mail.driver', 'smtp'),
-            'host' => $sysConfig['host'] ?? config('mail.host', 'smtp.feishu.cn'),
-            'port' => $sysConfig['port'] ?? config('mail.port', '465'),
-            'username' => $sysConfig['username'] ?? config('mail.username', 'no-reply@opwan.ai'),
+            'driver' => $getValue('driver'),
+            'host' => $getValue('host'),
+            'port' => $getValue('port'),
+            'username' => $getValue('username'),
             'from'      =>  [
-                'address'   =>   $sysConfig['from_address'] ?? config('mail.from.address', 'no-reply@opwan.ai'),
-                'name'      =>  $sysConfig['from_name'] ?? config('mail.from.name', '独角数卡')
+                'address'   =>   $getValue('from.address', 'from_address'),
+                'name'      =>  $getValue('from.name', 'from_name')
             ],
-            'password' => $sysConfig['password'] ?? config('mail.password', 'Y5H2MrTLzJfFUH0a'),
-            'encryption' => $sysConfig['encryption'] ?? config('mail.encryption', 'ssl')
+            'password' => $getValue('password'),
+            'encryption' => $getValue('encryption')
         ];
         $to = $this->to;
         //  覆盖 mail 配置
