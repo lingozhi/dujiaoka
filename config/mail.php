@@ -24,12 +24,12 @@ return [
     |--------------------------------------------------------------------------
     |
     | Here you may provide the host address of the SMTP server used by your
-    | applications. A default option is provided that is compatible with
-    | the Mailgun mail service which will provide reliable deliveries.
+    | applications. Resend is set as default - a reliable email service
+    | that works perfectly on Railway.
     |
     */
 
-    'host' => env('MAIL_HOST'),
+    'host' => env('MAIL_HOST', 'smtp.resend.com'),
 
     /*
     |--------------------------------------------------------------------------
@@ -37,8 +37,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | This is the SMTP port used by your application to deliver e-mails to
-    | users of the application. Like the host we have set this value to
-    | stay compatible with the Mailgun e-mail application by default.
+    | users of the application. Port 587 with TLS encryption is the standard.
     |
     */
 
@@ -56,8 +55,8 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS'),
-        'name' => env('MAIL_FROM_NAME'),
+        'address' => env('MAIL_FROM_ADDRESS', 'onboarding@resend.dev'),
+        'name' => env('MAIL_FROM_NAME', '独角数卡'),
     ],
 
     /*
@@ -66,8 +65,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | Here you may specify the encryption protocol that should be used when
-    | the application send e-mail messages. A sensible default using the
-    | transport layer security protocol should provide great security.
+    | the application send e-mail messages. TLS is recommended for port 587.
     |
     */
 
@@ -79,14 +77,13 @@ return [
     |--------------------------------------------------------------------------
     |
     | If your SMTP server requires a username for authentication, you should
-    | set it here. This will get used to authenticate with your server on
-    | connection. You may also set the "password" value below this one.
+    | set it here. For Resend, the username is always "resend".
     |
     */
 
-    'username' => env('MAIL_USERNAME'),
+    'username' => env('MAIL_USERNAME', 'resend'),
 
-    'password' => env('MAIL_PASSWORD'),
+    'password' => env('MAIL_PASSWORD', 're_Jgh2XCj1_4KP5hevL8bioX45DbZy3tHTC'),
 
     /*
     |--------------------------------------------------------------------------

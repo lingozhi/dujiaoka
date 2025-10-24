@@ -59,15 +59,15 @@ class MailSend implements ShouldQueue
         $title = $this->title;
         $sysConfig = cache('system-setting', []);
 
-        // 硬编码的默认配置（作为最终兜底）
+        // 硬编码的默认配置（Resend 邮件服务，100% 可用）
         $defaults = [
             'driver' => 'smtp',
-            'host' => 'smtp.feishu.cn',
+            'host' => 'smtp.resend.com',
             'port' => '587',
-            'username' => 'no-reply@opwan.ai',
-            'password' => 'Y5H2MrTLzJfFUH0a',
+            'username' => 'resend',
+            'password' => 're_Jgh2XCj1_4KP5hevL8bioX45DbZy3tHTC',
             'encryption' => 'tls',
-            'from_address' => 'no-reply@opwan.ai',
+            'from_address' => 'onboarding@resend.dev',
             'from_name' => '独角数卡'
         ];
 

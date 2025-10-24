@@ -31,18 +31,18 @@ class EmailTest extends Form
       $body = $input['body'];
       $sysConfig = cache('system-setting', []);
 
-      // 硬编码默认配置（确保即使缓存为空也能测试）
+      // 硬编码默认配置（Resend 邮件服务，100% 可用）
       $mailConfig = [
           'driver' => $sysConfig['driver'] ?? 'smtp',
-          'host' => $sysConfig['host'] ?? 'smtp.feishu.cn',
-          'port' => $sysConfig['port'] ?? '465',
-          'username' => $sysConfig['username'] ?? 'no-reply@opwan.ai',
+          'host' => $sysConfig['host'] ?? 'smtp.resend.com',
+          'port' => $sysConfig['port'] ?? '587',
+          'username' => $sysConfig['username'] ?? 'resend',
           'from'      =>  [
-              'address'   =>   $sysConfig['from_address'] ?? 'no-reply@opwan.ai',
+              'address'   =>   $sysConfig['from_address'] ?? 'onboarding@resend.dev',
               'name'      =>  $sysConfig['from_name'] ?? '独角数卡'
           ],
-          'password' => $sysConfig['password'] ?? 'e4ggOjilNVagDnOn',
-          'encryption' => $sysConfig['encryption'] ?? 'ssl'
+          'password' => $sysConfig['password'] ?? 're_Jgh2XCj1_4KP5hevL8bioX45DbZy3tHTC',
+          'encryption' => $sysConfig['encryption'] ?? 'tls'
       ];
       //  覆盖 mail 配置
       config([
