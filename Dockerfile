@@ -42,14 +42,25 @@ if [ -d "/data" ]; then\n\
     fi\n\
     ln -sf /data/.env /app/.env\n\
     \n\
-    # 处理安装锁文件 - 双向同步\n\
+    # 处理安装锁文件 - 确保始终链接到持久化目录\n\
+    # 删除可能存在的旧文件\n\
+    rm -f /app/install.lock\n\
+    \n\
+    # 如果 /data 中没有 install.lock，但 app 中有（构建时的），复制过去\n\
+    if [ ! -f /data/install.lock ] && [ -f /app/install.lock.bak ]; then\n\
+        echo "Restoring install.lock from backup..."\n\
+        cp /app/install.lock.bak /data/install.lock\n\
+    fi\n\
+    \n\
+    # 创建软链接，无论 /data/install.lock 是否存在\n\
+    echo "Creating install.lock symlink to /data..."\n\
+    ln -sf /data/install.lock /app/install.lock\n\
+    \n\
+    # 如果已经安装过，显示状态\n\
     if [ -f /data/install.lock ]; then\n\
-        echo "Found existing install.lock in /data, linking to app..."\n\
-        ln -sf /data/install.lock /app/install.lock\n\
-    elif [ -f /app/install.lock ]; then\n\
-        echo "Found install.lock in app, copying to /data..."\n\
-        cp /app/install.lock /data/install.lock\n\
-        ln -sf /data/install.lock /app/install.lock\n\
+        echo "Installation lock found - app already installed"\n\
+    else\n\
+        echo "No installation lock - ready for first-time setup"\n\
     fi\n\
     \n\
     # 创建持久化目录\n\
