@@ -100,7 +100,8 @@ if [ -f /app/.env ]; then\n\
     echo "Running Laravel initialization..."\n\
     php artisan config:clear 2>/dev/null || true\n\
     php artisan cache:clear 2>/dev/null || true\n\
-    php artisan config:cache 2>/dev/null || true\n\
+    # 注意：不缓存配置，以便环境变量（如邮件配置）能在运行时动态加载\n\
+    # php artisan config:cache 2>/dev/null || true\n\
     php artisan route:cache 2>/dev/null || true\n\
     php artisan view:cache 2>/dev/null || true\n\
 fi\n\

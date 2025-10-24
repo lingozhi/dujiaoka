@@ -59,18 +59,18 @@ class MailSend implements ShouldQueue
         $title = $this->title;
         $sysConfig = cache('system-setting', []);
 
-        // 优先使用缓存配置，如果缓存为空则使用环境变量（Railway 持久化配置）
+        // 三层后备机制：1. 缓存配置 2. config配置 3. 硬编码默认值
         $mailConfig = [
-            'driver' => $sysConfig['driver'] ?? env('MAIL_MAILER', 'smtp'),
-            'host' => $sysConfig['host'] ?? env('MAIL_HOST', ''),
-            'port' => $sysConfig['port'] ?? env('MAIL_PORT', '465'),
-            'username' => $sysConfig['username'] ?? env('MAIL_USERNAME', ''),
+            'driver' => $sysConfig['driver'] ?? config('mail.driver', 'smtp'),
+            'host' => $sysConfig['host'] ?? config('mail.host', 'smtp.feishu.cn'),
+            'port' => $sysConfig['port'] ?? config('mail.port', '465'),
+            'username' => $sysConfig['username'] ?? config('mail.username', 'no-reply@opwan.ai'),
             'from'      =>  [
-                'address'   =>   $sysConfig['from_address'] ?? env('MAIL_FROM_ADDRESS', ''),
-                'name'      =>  $sysConfig['from_name'] ?? env('MAIL_FROM_NAME', '独角发卡')
+                'address'   =>   $sysConfig['from_address'] ?? config('mail.from.address', 'no-reply@opwan.ai'),
+                'name'      =>  $sysConfig['from_name'] ?? config('mail.from.name', '独角数卡')
             ],
-            'password' => $sysConfig['password'] ?? env('MAIL_PASSWORD', ''),
-            'encryption' => $sysConfig['encryption'] ?? env('MAIL_ENCRYPTION', '')
+            'password' => $sysConfig['password'] ?? config('mail.password', 'Y5H2MrTLzJfFUH0a'),
+            'encryption' => $sysConfig['encryption'] ?? config('mail.encryption', 'ssl')
         ];
         $to = $this->to;
         //  覆盖 mail 配置
