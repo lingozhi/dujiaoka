@@ -11,6 +11,20 @@ WORKDIR /app
 # 安装 Composer 依赖
 RUN [ "sh", "-c", "composer install --ignore-platform-reqs" ]
 
+# 创建 minified 版本的静态资源（用于生产环境）
+RUN cd /app/public/vendor/dcat-admin/dcat/css && \
+    for file in dcat-app*.css; do \
+        if [ ! -f "${file%.css}.min.css" ]; then \
+            cp "$file" "${file%.css}.min.css"; \
+        fi \
+    done && \
+    cd /app/public/vendor/dcat-admin/dcat/js && \
+    for file in *.js; do \
+        if [[ "$file" != *.min.js ]] && [[ "$file" != *.map ]]; then \
+            cp "$file" "${file%.js}.min.js"; \
+        fi \
+    done
+
 # 创建增强的启动脚本，支持 Railway /data 持久化存储
 RUN echo '#!/bin/bash\n\
 # 检查 /data 目录是否存在（Railway 环境）\n\
