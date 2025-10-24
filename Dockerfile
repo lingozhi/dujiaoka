@@ -51,9 +51,17 @@ if [ -d "/data" ]; then\n\
     echo "Persistence setup completed."\n\
 fi\n\
 \n\
+# 创建 storage 软链接\n\
+if [ ! -L /app/public/storage ]; then\n\
+    echo "Creating storage symlink..."\n\
+    php artisan storage:link 2>/dev/null || true\n\
+fi\n\
+\n\
 # Laravel 初始化（如果有 .env 文件）\n\
 if [ -f /app/.env ]; then\n\
     echo "Running Laravel initialization..."\n\
+    php artisan config:clear 2>/dev/null || true\n\
+    php artisan cache:clear 2>/dev/null || true\n\
     php artisan config:cache 2>/dev/null || true\n\
     php artisan route:cache 2>/dev/null || true\n\
     php artisan view:cache 2>/dev/null || true\n\
