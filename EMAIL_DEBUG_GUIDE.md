@@ -129,12 +129,94 @@ $defaults = [
 
 这些配置会在其他方式都失败时自动使用。
 
-## 🚨 如果仍然失败
+## 🚨 连接超时问题
 
-请运行调试命令并把完整输出发给我：
+如果出现 `Connection timed out` 错误，说明配置已正确加载，但**网络连接失败**。
+
+### 步骤 1: 测试网络连接
 
 ```bash
-railway run php artisan mail:debug-config
+railway run php artisan mail:test-connection smtp.feishu.cn --port=465
 ```
 
-这样我就能看到配置加载的每一步情况，找出问题所在。
+这个命令会测试：
+- ✅ DNS 解析
+- ✅ TCP 连接
+- ✅ SSL 连接
+- ✅ 其他常用 SMTP 端口 (25, 587, 465, 2525)
+
+### 步骤 2: 尝试不同的端口和加密方式
+
+**方案 1: 端口 587 + TLS**（推荐）
+
+```bash
+railway run php artisan mail:test-flexible your_email@example.com --port=587 --encryption=tls
+```
+
+**方案 2: 端口 25 + TLS**
+
+```bash
+railway run php artisan mail:test-flexible your_email@example.com --port=25 --encryption=tls
+```
+
+**方案 3: 端口 465 + SSL**（当前配置）
+
+```bash
+railway run php artisan mail:test-flexible your_email@example.com --port=465 --encryption=ssl
+```
+
+### 步骤 3: 找到可用配置后更新环境变量
+
+如果某个配置可以发送成功，在 Railway 控制台更新环境变量：
+
+```
+MAIL_HOST=smtp.feishu.cn
+MAIL_PORT=587          # 使用测试成功的端口
+MAIL_ENCRYPTION=tls    # 使用测试成功的加密方式
+MAIL_USERNAME=no-reply@opwan.ai
+MAIL_PASSWORD=Y5H2MrTLzJfFUH0a
+```
+
+### 可能的问题和解决方案
+
+#### 问题 1: Railway 防火墙阻止 SMTP 端口
+
+**症状:** 所有端口都连接超时
+
+**解决方案:**
+1. 使用第三方邮件服务（如 SendGrid, Mailgun, Amazon SES）
+2. 这些服务提供 API 方式发送邮件，不依赖 SMTP 端口
+
+#### 问题 2: Feishu SMTP 限制 IP 地址
+
+**症状:** 连接拒绝或超时
+
+**解决方案:**
+1. 检查 Feishu 邮箱设置，确认 SMTP 已启用
+2. 查看是否有 IP 白名单限制
+3. 尝试使用其他邮箱服务
+
+#### 问题 3: 用户名或密码错误
+
+**症状:** `Authentication failed`
+
+**解决方案:**
+1. 确认 `no-reply@opwan.ai` 的密码是否正确
+2. 确认 Feishu 是否需要应用专用密码
+3. 检查账号是否被锁定
+
+## 📝 调试命令汇总
+
+```bash
+# 1. 检查配置加载
+railway run php artisan mail:debug-config
+
+# 2. 测试网络连接
+railway run php artisan mail:test-connection smtp.feishu.cn --port=465
+
+# 3. 测试不同配置发送邮件
+railway run php artisan mail:test-flexible your@email.com --port=587 --encryption=tls
+
+# 4. 使用当前配置发送测试邮件
+railway run php artisan email:test your@email.com
+```
