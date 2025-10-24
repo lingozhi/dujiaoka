@@ -18,25 +18,35 @@ class SystemSetting extends Form
     public function handle(array $input)
     {
         try {
+            // 记录收到的数据（调试用）
+            \Log::info('SystemSetting handle called', [
+                'input_keys' => array_keys($input),
+                'has_host' => isset($input['host']),
+            ]);
+
             // 确保缓存目录存在（Railway 持久化支持）
             $cacheDir = storage_path('framework/cache/data');
             if (!is_dir($cacheDir)) {
                 @mkdir($cacheDir, 0755, true);
             }
 
-            // 保存配置到缓存
-            $result = Cache::put('system-setting', $input);
+            // 保存配置到缓存（使用永久存储）
+            Cache::forever('system-setting', $input);
 
-            // 记录日志（用于调试）
-            \Log::info('System settings saved', [
+            // 验证保存
+            $saved = Cache::get('system-setting');
+
+            // 记录日志
+            \Log::info('System settings saved successfully', [
                 'cache_driver' => config('cache.default'),
-                'result' => $result,
-                'mail_host' => $input['host'] ?? 'not set',
+                'saved_host' => $saved['host'] ?? 'empty',
+                'input_host' => $input['host'] ?? 'empty',
             ]);
 
             return $this
                 ->response()
-                ->success(admin_trans('system-setting.rule_messages.save_system_setting_success'));
+                ->success(admin_trans('system-setting.rule_messages.save_system_setting_success'))
+                ->refresh();
 
         } catch (\Exception $e) {
             // 捕获异常并返回错误信息
