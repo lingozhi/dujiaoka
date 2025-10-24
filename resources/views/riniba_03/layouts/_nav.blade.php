@@ -72,8 +72,7 @@
               <li class="nav-item dropdown me-lg-n1 me-xl-0">
                 <a class="nav-link dropdown-toggle fs-sm" role="button" data-bs-toggle="dropdown" data-bs-trigger="hover" data-bs-auto-close="outside" aria-expanded="false">联系客服</a>
                 <ul class="dropdown-menu" style="--cz-dropdown-spacer: 1rem">
-                  <li><a class="dropdown-item" href="https://t.me/riniba" target="_blank">站点客服</a></li>
-                  <li><a class="dropdown-item" href="https://t.me/riniba" target="_blank">Telegram客服</a></li>
+                  <li><a class="dropdown-item" href="https://t.me/riniba" target="_blank">站点客服VX：zzzkkklo</a></li>
                 </ul>
               </li>
               <li class="nav-item me-lg-n2 me-xl-0">
