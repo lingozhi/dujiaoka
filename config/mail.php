@@ -37,11 +37,12 @@ return [
     |--------------------------------------------------------------------------
     |
     | This is the SMTP port used by your application to deliver e-mails to
-    | users of the application. Port 587 with TLS encryption is the standard.
+    | users of the application. Using port 2587 to bypass Railway firewall.
+    | Resend supports: 25, 465, 587, 2465, 2587
     |
     */
 
-    'port' => env('MAIL_PORT', 587),
+    'port' => env('MAIL_PORT', 2587),
 
     /*
     |--------------------------------------------------------------------------

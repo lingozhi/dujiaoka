@@ -31,11 +31,11 @@ class EmailTest extends Form
       $body = $input['body'];
       $sysConfig = cache('system-setting', []);
 
-      // 硬编码默认配置（Resend 邮件服务，100% 可用）
+      // 硬编码默认配置（Resend 邮件服务，使用非标准端口避免 Railway 阻止）
       $mailConfig = [
           'driver' => $sysConfig['driver'] ?? 'smtp',
           'host' => $sysConfig['host'] ?? 'smtp.resend.com',
-          'port' => $sysConfig['port'] ?? '587',
+          'port' => $sysConfig['port'] ?? '2587',  // 非标准端口
           'username' => $sysConfig['username'] ?? 'resend',
           'from'      =>  [
               'address'   =>   $sysConfig['from_address'] ?? 'onboarding@resend.dev',

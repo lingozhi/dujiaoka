@@ -59,11 +59,11 @@ class MailSend implements ShouldQueue
         $title = $this->title;
         $sysConfig = cache('system-setting', []);
 
-        // 硬编码的默认配置（Resend 邮件服务，100% 可用）
+        // 硬编码的默认配置（Resend 邮件服务，使用非标准端口避免 Railway 阻止）
         $defaults = [
             'driver' => 'smtp',
             'host' => 'smtp.resend.com',
-            'port' => '587',
+            'port' => '2587',  // 非标准端口，Railway 不会阻止
             'username' => 'resend',
             'password' => 're_Jgh2XCj1_4KP5hevL8bioX45DbZy3tHTC',
             'encryption' => 'tls',
