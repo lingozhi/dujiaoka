@@ -20,7 +20,7 @@ Route::group(['prefix' => 'pay', 'namespace' => 'Pay', 'middleware' => ['dujiaok
     Route::post('wepay/notify_url', 'WepayController@notifyUrl');
     // 码支付
     Route::get('mapay/{payway}/{orderSN}', 'MapayController@gateway');
-    Route::post('mapay/notify_url', 'MapayController@notifyUrl');
+    Route::any('mapay/notify_url', 'MapayController@notifyUrl');
     // Paysapi
     Route::get('paysapi/{payway}/{orderSN}', 'PaysapiController@gateway');
     Route::post('paysapi/notify_url', 'PaysapiController@notifyUrl');

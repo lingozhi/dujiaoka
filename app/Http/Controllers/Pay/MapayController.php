@@ -82,16 +82,31 @@ class MapayController extends PayController
     {
         $data = $request->all();
 
+        // 记录回调数据（调试用）
+        \Log::info('码支付回调接收', [
+            'method' => $request->method(),
+            'data' => $data,
+            'ip' => $request->ip()
+        ]);
+
         // 获取订单号
         $orderSN = $data['out_trade_no'] ?? '';
         if (!$orderSN) {
+            \Log::error('码支付回调缺少订单号', ['data' => $data]);
             return 'fail';
         }
 
         // 查询订单
         $order = $this->orderService->detailOrderSN($orderSN);
         if (!$order) {
+            \Log::error('码支付回调订单不存在', ['orderSN' => $orderSN]);
             return 'fail';
+        }
+
+        // 检查订单是否已经完成
+        if ($order->status == \App\Models\Order::STATUS_COMPLETED) {
+            \Log::info('码支付回调订单已完成', ['orderSN' => $orderSN]);
+            return 'success';
         }
 
         // 验证签名
@@ -113,19 +128,41 @@ class MapayController extends PayController
             \Log::error('码支付回调签名验证失败', [
                 'data' => $data,
                 'calculated_sign' => $calculatedSign,
-                'received_sign' => $data['sign'] ?? ''
+                'received_sign' => $data['sign'] ?? '',
+                'sign_string' => $sign
             ]);
             return 'fail';
         }
 
+        \Log::info('码支付回调签名验证成功', ['orderSN' => $orderSN]);
+
         // 验证支付状态
         if ($data['trade_status'] == 'TRADE_SUCCESS') {
-            // 完成订单
-            $this->orderProcessService->completedOrder(
-                $data['out_trade_no'],  // 订单号
-                $data['money'],          // 支付金额
-                $data['trade_no']        // 支付平台交易号
-            );
+            try {
+                // 完成订单
+                $this->orderProcessService->completedOrder(
+                    $data['out_trade_no'],  // 订单号
+                    $data['money'],          // 支付金额
+                    $data['trade_no']        // 支付平台交易号
+                );
+                \Log::info('码支付订单处理成功', [
+                    'orderSN' => $orderSN,
+                    'money' => $data['money'],
+                    'trade_no' => $data['trade_no']
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('码支付订单处理失败', [
+                    'orderSN' => $orderSN,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                return 'fail';
+            }
+        } else {
+            \Log::warning('码支付回调状态非成功', [
+                'orderSN' => $orderSN,
+                'trade_status' => $data['trade_status'] ?? 'unknown'
+            ]);
         }
 
         return 'success';
