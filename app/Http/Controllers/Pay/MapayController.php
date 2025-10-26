@@ -8,43 +8,70 @@ use Illuminate\Http\Request;
 
 class MapayController extends PayController
 {
+    // ⚠️ 硬编码配置 - 码支付 (epay 接口)
+    private $hardcodedConfig = [
+        'submit_url' => 'https://mzf.akwl.net/xpay/epay/submit.php',  // 提交地址
+        'pid' => '10178',                           // 商户ID
+        'key' => '40OuICCg5aUcnPrLN5GB',           // 商户密钥
+    ];
 
     public function gateway(string $payway, string $orderSN)
     {
         try {
-            // 加载网关
+            // 加载网关（获取订单信息）
             $this->loadGateWay($orderSN, $payway);
-            //构造要请求的参数数组，无需改动
-            $parameter = array(
-                "id" => (int)$this->payGateway->merchant_id,//平台ID号
-                "price" => (float)$this->order->actual_price,//原价
-                "pay_id" => $this->order->order_sn, //可以是用户ID,站内商户订单号,用户名
-                "param" => $this->payGateway->pay_check,//自定义参数
-                "act" => 0,//是否开启认证版的免挂机功能
-                "outTime" => 120,//二维码超时设置
-                "page" => 1,//付款页面展示方式
-                'return_url' => url('detail-order-sn', ['orderSN' => $this->order->order_sn]),
-                'notify_url' => url($this->payGateway->pay_handleroute . '/notify_url'),
-                "pay_type" => 0,//支付宝使用官方接口
-                "chart" => 'utf-8'//字符编码方式
-                //其他业务参数根据在线开发文档，添加参数.文档地址:https://codepay.fateqq.com/apiword/
-                //如"参数名"=>"参数值"
-            );
+
+            // 支付类型映射
+            $payType = '';
             switch ($payway){
-                case 'mqq':
-                    $parameter['type'] = 2;
+                case 'mqq':      // 码QQ
+                    $payType = 'qqpay';
                     break;
-                case 'mzfb':
-                    $parameter['type'] = 1;
+                case 'mzfb':     // 码支付宝
+                    $payType = 'alipay';
                     break;
-                case 'mwx':
+                case 'mwx':      // 码微信
                 default:
-                    $parameter['type'] = 3;
+                    $payType = 'wxpay';
                     break;
             }
-            $quri = md5_signquery($parameter, $this->payGateway->merchant_pem);
-            $payurl = $this->payGateway->merchant_key . $quri; //支付页面
-            return redirect()->away($payurl);
+
+            // 构造标准易支付参数
+            $parameter = [
+                'pid' => $this->hardcodedConfig['pid'],
+                'type' => $payType,
+                'out_trade_no' => $this->order->order_sn,
+                'notify_url' => url('/pay/mapay/notify_url'),
+                'return_url' => url('detail-order-sn', ['orderSN' => $this->order->order_sn]),
+                'name' => $this->order->order_sn,
+                'money' => (float)$this->order->actual_price,
+                'sign' => '',
+                'sign_type' => 'MD5'
+            ];
+
+            // 生成签名
+            ksort($parameter);
+            reset($parameter);
+            $sign = '';
+            foreach ($parameter as $key => $val) {
+                if ($key == "sign" || $key == "sign_type" || $val == "") continue;
+                if ($sign != '') {
+                    $sign .= "&";
+                }
+                $sign .= "$key=$val";
+            }
+            $sign = md5($sign . $this->hardcodedConfig['key']);
+            $parameter['sign'] = $sign;
+
+            // 构造提交表单
+            $sHtml = "<form id='mapaysubmit' name='mapaysubmit' action='" . $this->hardcodedConfig['submit_url'] . "' method='get'>";
+            foreach($parameter as $key => $val) {
+                $sHtml.= "<input type='hidden' name='".$key."' value='".$val."'/>";
+            }
+            $sHtml = $sHtml."<input type='submit' value=''></form>";
+            $sHtml = $sHtml."<script>document.forms['mapaysubmit'].submit();</script>";
+
+            return $sHtml;
         } catch (RuleValidationException $exception) {
             return $this->err($exception->getMessage());
         }
@@ -53,26 +80,55 @@ class MapayController extends PayController
 
     public function notifyUrl(Request $request)
     {
-        $data = $request->post();
-        $order = $this->orderService->detailOrderSN($data['pay_id']);
+        $data = $request->all();
+
+        // 获取订单号
+        $orderSN = $data['out_trade_no'] ?? '';
+        if (!$orderSN) {
+            return 'fail';
+        }
+
+        // 查询订单
+        $order = $this->orderService->detailOrderSN($orderSN);
         if (!$order) {
             return 'fail';
         }
-        $payGateway = $this->payService->detail($order->pay_id);
-        if (!$payGateway) {
+
+        // 验证签名
+        ksort($data);
+        reset($data);
+        $sign = '';
+        foreach ($data as $key => $val) {
+            if ($key == "sign" || $key == "sign_type" || $val == "") continue;
+            if ($sign != '') {
+                $sign .= "&";
+            }
+            $sign .= "$key=$val";
+        }
+
+        $calculatedSign = md5($sign . $this->hardcodedConfig['key']);
+
+        // 验证签名是否正确
+        if (!isset($data['trade_no']) || $calculatedSign != $data['sign']) {
+            \Log::error('码支付回调签名验证失败', [
+                'data' => $data,
+                'calculated_sign' => $calculatedSign,
+                'received_sign' => $data['sign'] ?? ''
+            ]);
             return 'fail';
         }
-        if($payGateway->pay_handleroute != '/pay/mapay'){
-            return 'fail';
+
+        // 验证支付状态
+        if ($data['trade_status'] == 'TRADE_SUCCESS') {
+            // 完成订单
+            $this->orderProcessService->completedOrder(
+                $data['out_trade_no'],  // 订单号
+                $data['money'],          // 支付金额
+                $data['trade_no']        // 支付平台交易号
+            );
         }
-        $query = signquery_string($data);
-        if (!$data['pay_no'] || md5($query . $payGateway->merchant_pem ) != $data['sign']) { //不合法的数据
-            return 'fail';  //返回失败 继续补单
-        } else { //合法的数据
-            //业务处理
-            $this->orderProcessService->completedOrder($data['pay_id'], $data['money'], $data['pay_id']);
-            return 'success';
-        }
+
+        return 'success';
     }
 
 
