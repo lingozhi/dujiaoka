@@ -361,21 +361,29 @@ class AlipayController extends PayController
         ], '', $key);
 
         // 判断密钥类型
-        // PKCS#1: 以 MIIEv, MIIC 等开头
-        // PKCS#8: 以 MIIEvg, MIIEvQ 等开头 (但实际上很难区分)
-        // 直接尝试 PKCS#8 格式 (BEGIN PRIVATE KEY)，这是更通用的格式
+        // PKCS#1: 以 MIIEvQ, MIIEvg, MIIC 等开头 - 用 RSA PRIVATE KEY
+        // PKCS#8: 以 MIIOP 等开头 - 用 PRIVATE KEY
         $firstChars = substr($cleanKey, 0, 6);
         error_log("[ALIPAY] 私钥前6字符: {$firstChars}, 长度: " . strlen($cleanKey));
 
         // 每64字符换行
         $keyLines = str_split($cleanKey, 64);
 
-        // 默认使用 PKCS#8 格式
-        $formattedKey = "-----BEGIN PRIVATE KEY-----\n" .
-            implode("\n", $keyLines) .
-            "\n-----END PRIVATE KEY-----";
+        // 根据前缀判断格式
+        // MIIEv 开头通常是 PKCS#1 (RSA PRIVATE KEY)
+        if (strpos($firstChars, 'MIIEv') === 0 || strpos($firstChars, 'MIIC') === 0 || strpos($firstChars, 'MIIE') === 0) {
+            $formattedKey = "-----BEGIN RSA PRIVATE KEY-----\n" .
+                implode("\n", $keyLines) .
+                "\n-----END RSA PRIVATE KEY-----";
+            error_log("[ALIPAY] 使用 PKCS#1 格式 (RSA PRIVATE KEY)");
+        } else {
+            // 其他情况使用 PKCS#8
+            $formattedKey = "-----BEGIN PRIVATE KEY-----\n" .
+                implode("\n", $keyLines) .
+                "\n-----END PRIVATE KEY-----";
+            error_log("[ALIPAY] 使用 PKCS#8 格式 (PRIVATE KEY)");
+        }
 
-        error_log("[ALIPAY] 使用 PKCS#8 格式 (PRIVATE KEY)");
         return $formattedKey;
     }
 
