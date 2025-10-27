@@ -750,7 +750,7 @@ TkSuQmCC" />
 
                 <div class="form-field">
                     <label>网站url</label>
-                    <input name="app_url" value="" required="" placeholder="例如：http://dujiaoka.com" />
+                    <input name="app_url" value="" required="" placeholder="例如：https://relay.opwan.ai/" />
                 </div>
 
 

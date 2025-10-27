@@ -68,8 +68,7 @@
             </ul>
             <div class="vr text-body-secondary opacity-25 mx-4 d-none d-md-inline-block order-md-2"></div>
             <p class="fs-xs text-center text-lg-start mb-0 order-md-1">
-              © All rights reserved. Made by
-              <span class="animate-underline"><a class="animate-target text-dark-emphasis text-decoration-none" href="https://t.me/riniba" target="_blank" rel="noreferrer">@riniba</a></span>
+              © All rights reserved. Made by claudex
             </p>
           </div>
         </div>
