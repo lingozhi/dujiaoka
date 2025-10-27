@@ -161,6 +161,10 @@ class AlipayController extends PayController
      */
     public function notifyUrl(Request $request)
     {
+        // 直接输出到 stderr 以便在 Railway 看到
+        error_log('[ALIPAY NOTIFY] 开始处理回调');
+        error_log('[ALIPAY NOTIFY] 请求数据: ' . json_encode($request->all()));
+
         // 记录回调数据（调试用）
         \Log::info('支付宝回调接收', [
             'method' => $request->method(),
@@ -171,29 +175,40 @@ class AlipayController extends PayController
 
         $orderSN = $request->input('out_trade_no');
         if (!$orderSN) {
+            error_log('[ALIPAY NOTIFY] 错误: 缺少订单号');
             \Log::error('支付宝回调缺少订单号', ['data' => $request->all()]);
             return 'error';
         }
 
+        error_log('[ALIPAY NOTIFY] 订单号: ' . $orderSN);
+
         $order = $this->orderService->detailOrderSN($orderSN);
         if (!$order) {
+            error_log('[ALIPAY NOTIFY] 错误: 订单不存在');
             \Log::error('支付宝回调订单不存在', ['orderSN' => $orderSN]);
             return 'error';
         }
 
+        error_log('[ALIPAY NOTIFY] 订单状态: ' . $order->status);
+
         // 检查订单是否已经完成
         if ($order->status == \App\Models\Order::STATUS_COMPLETED) {
+            error_log('[ALIPAY NOTIFY] 订单已完成，返回success');
             \Log::info('支付宝回调订单已完成', ['orderSN' => $orderSN]);
             return 'success';
         }
 
         $payGateway = $this->payService->detail($order->pay_id);
         if (!$payGateway) {
+            error_log('[ALIPAY NOTIFY] 错误: 支付网关不存在');
             \Log::error('支付宝回调支付网关不存在', ['pay_id' => $order->pay_id]);
             return 'error';
         }
 
+        error_log('[ALIPAY NOTIFY] 支付网关路由: ' . $payGateway->pay_handleroute);
+
         if($payGateway->pay_handleroute != '/pay/alipay'){
+            error_log('[ALIPAY NOTIFY] 错误: 路由不匹配，期望 /pay/alipay，实际 ' . $payGateway->pay_handleroute);
             \Log::error('支付宝回调路由不匹配', [
                 'expected' => '/pay/alipay',
                 'actual' => $payGateway->pay_handleroute
@@ -213,10 +228,14 @@ class AlipayController extends PayController
             'has_private_key' => !empty($payGateway->merchant_pem)
         ]);
 
+        error_log('[ALIPAY NOTIFY] 开始验证签名');
+
         $pay = Pay::alipay($config);
         try{
             // 验证签名
             $result = $pay->verify();
+
+            error_log('[ALIPAY NOTIFY] 签名验证成功，交易状态: ' . $result->trade_status);
 
             \Log::info('支付宝回调签名验证成功', [
                 'orderSN' => $orderSN,
@@ -226,18 +245,21 @@ class AlipayController extends PayController
             ]);
 
             if ($result->trade_status == 'TRADE_SUCCESS' || $result->trade_status == 'TRADE_FINISHED') {
+                error_log('[ALIPAY NOTIFY] 交易成功，开始处理订单');
                 try {
                     $this->orderProcessService->completedOrder(
                         $result->out_trade_no,
                         $result->total_amount,
                         $result->trade_no
                     );
+                    error_log('[ALIPAY NOTIFY] 订单处理成功');
                     \Log::info('支付宝订单处理成功', [
                         'orderSN' => $orderSN,
                         'amount' => $result->total_amount,
                         'trade_no' => $result->trade_no
                     ]);
                 } catch (\Exception $e) {
+                    error_log('[ALIPAY NOTIFY] 订单处理失败: ' . $e->getMessage());
                     \Log::error('支付宝订单处理失败', [
                         'orderSN' => $orderSN,
                         'error' => $e->getMessage(),
@@ -246,13 +268,16 @@ class AlipayController extends PayController
                     return 'fail';
                 }
             } else {
+                error_log('[ALIPAY NOTIFY] 交易状态非成功: ' . $result->trade_status);
                 \Log::warning('支付宝回调状态非成功', [
                     'orderSN' => $orderSN,
                     'trade_status' => $result->trade_status
                 ]);
             }
+            error_log('[ALIPAY NOTIFY] 返回 success');
             return 'success';
         } catch (\Exception $exception) {
+            error_log('[ALIPAY NOTIFY] 异常: ' . $exception->getMessage());
             \Log::error('支付宝回调异常', [
                 'orderSN' => $orderSN,
                 'error' => $exception->getMessage(),
