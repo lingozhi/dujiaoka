@@ -114,7 +114,7 @@ class SystemSetting extends Form
         $this->tab(admin_trans('system-setting.labels.mail_setting'), function () {
             $this->text('driver', admin_trans('system-setting.fields.driver'))->default('smtp')->required();
             $this->text('host', admin_trans('system-setting.fields.host'));
-            $this->text('port', admin_trans('system-setting.fields.port'))->default(587);
+            $this->text('port', admin_trans('system-setting.fields.port'))->default(2587);  // Resend 非标准端口
             $this->text('username', admin_trans('system-setting.fields.username'));
             $this->text('password', admin_trans('system-setting.fields.password'));
             $this->text('encryption', admin_trans('system-setting.fields.encryption'));
