@@ -21,10 +21,15 @@ class AlipayController extends PayController
         try {
             // 加载网关
             $this->loadGateWay($orderSN, $payway);
+
+            // 格式化密钥（添加头尾标记）
+            $aliPublicKey = $this->formatPublicKey($this->payGateway->merchant_key);
+            $privateKey = $this->formatPrivateKey($this->payGateway->merchant_pem);
+
             $config = [
                 'app_id' => $this->payGateway->merchant_id,
-                'ali_public_key' => $this->payGateway->merchant_key,
-                'private_key' => $this->payGateway->merchant_pem,
+                'ali_public_key' => $aliPublicKey,
+                'private_key' => $privateKey,
                 'notify_url' => url($this->payGateway->pay_handleroute . '/notify_url'),
                 'return_url' => url($this->payGateway->pay_handleroute . '/return_url') . '?orderSN=' . $this->order->order_sn,
                 'http' => [ // optional
@@ -110,10 +115,14 @@ class AlipayController extends PayController
 
         // 尝试验证签名并处理订单
         try {
+            // 格式化密钥（添加头尾标记）
+            $aliPublicKey = $this->formatPublicKey($payGateway->merchant_key);
+            $privateKey = $this->formatPrivateKey($payGateway->merchant_pem);
+
             $config = [
                 'app_id' => $payGateway->merchant_id,
-                'ali_public_key' => $payGateway->merchant_key,
-                'private_key' => $payGateway->merchant_pem,
+                'ali_public_key' => $aliPublicKey,
+                'private_key' => $privateKey,
             ];
 
             $pay = Pay::alipay($config);
@@ -231,10 +240,14 @@ class AlipayController extends PayController
             return 'error';
         }
 
+        // 格式化密钥（添加头尾标记）
+        $aliPublicKey = $this->formatPublicKey($payGateway->merchant_key);
+        $privateKey = $this->formatPrivateKey($payGateway->merchant_pem);
+
         $config = [
             'app_id' => $payGateway->merchant_id,
-            'ali_public_key' => $payGateway->merchant_key,
-            'private_key' => $payGateway->merchant_pem,
+            'ali_public_key' => $aliPublicKey,
+            'private_key' => $privateKey,
         ];
 
         \Log::info('支付宝回调配置', [
@@ -302,6 +315,54 @@ class AlipayController extends PayController
         }
     }
 
+    /**
+     * 格式化支付宝公钥
+     */
+    private function formatPublicKey($key)
+    {
+        if (empty($key)) {
+            return $key;
+        }
 
+        // 去除头尾标记和换行
+        $key = str_replace([
+            '-----BEGIN PUBLIC KEY-----',
+            '-----END PUBLIC KEY-----',
+            "\r",
+            "\n",
+            ' '
+        ], '', $key);
+
+        // 添加标准头尾
+        return "-----BEGIN PUBLIC KEY-----\n" .
+            wordwrap($key, 64, "\n", true) .
+            "\n-----END PUBLIC KEY-----";
+    }
+
+    /**
+     * 格式化应用私钥
+     */
+    private function formatPrivateKey($key)
+    {
+        if (empty($key)) {
+            return $key;
+        }
+
+        // 去除头尾标记和换行
+        $key = str_replace([
+            '-----BEGIN RSA PRIVATE KEY-----',
+            '-----END RSA PRIVATE KEY-----',
+            '-----BEGIN PRIVATE KEY-----',
+            '-----END PRIVATE KEY-----',
+            "\r",
+            "\n",
+            ' '
+        ], '', $key);
+
+        // 添加标准头尾
+        return "-----BEGIN RSA PRIVATE KEY-----\n" .
+            wordwrap($key, 64, "\n", true) .
+            "\n-----END RSA PRIVATE KEY-----";
+    }
 
 }
