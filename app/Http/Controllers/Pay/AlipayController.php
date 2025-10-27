@@ -216,6 +216,21 @@ class AlipayController extends PayController
             return 'fail';
         }
 
+        // 详细检查配置
+        error_log('[ALIPAY NOTIFY] App ID: ' . $payGateway->merchant_id);
+        error_log('[ALIPAY NOTIFY] 支付宝公钥长度: ' . strlen($payGateway->merchant_key) . ' 字符');
+        error_log('[ALIPAY NOTIFY] 应用私钥长度: ' . strlen($payGateway->merchant_pem) . ' 字符');
+
+        if (empty($payGateway->merchant_key)) {
+            error_log('[ALIPAY NOTIFY] 错误: merchant_key 为空！请在后台填写支付宝公钥');
+            return 'error';
+        }
+
+        if (empty($payGateway->merchant_pem)) {
+            error_log('[ALIPAY NOTIFY] 错误: merchant_pem 为空！请在后台填写应用私钥');
+            return 'error';
+        }
+
         $config = [
             'app_id' => $payGateway->merchant_id,
             'ali_public_key' => $payGateway->merchant_key,
