@@ -348,8 +348,8 @@ class AlipayController extends PayController
             return $key;
         }
 
-        // 去除头尾标记和换行
-        $key = str_replace([
+        // 去除所有头尾标记和换行
+        $cleanKey = str_replace([
             '-----BEGIN RSA PRIVATE KEY-----',
             '-----END RSA PRIVATE KEY-----',
             '-----BEGIN PRIVATE KEY-----',
@@ -359,10 +359,26 @@ class AlipayController extends PayController
             ' '
         ], '', $key);
 
-        // 添加标准头尾
-        return "-----BEGIN RSA PRIVATE KEY-----\n" .
-            wordwrap($key, 64, "\n", true) .
-            "\n-----END RSA PRIVATE KEY-----";
+        // 判断密钥类型（通过前几个字符）
+        // PKCS#1: MIIEvQ, MIICXg, MIIE...
+        // PKCS#8: MIIEvg, MIIJQg...
+        $firstChars = substr($cleanKey, 0, 6);
+
+        error_log("[ALIPAY] 私钥前6字符: {$firstChars}, 长度: " . strlen($cleanKey));
+
+        // 尝试 PKCS#1 格式 (RSA PRIVATE KEY)
+        if (strpos($firstChars, 'MIIEv') === 0 || strpos($firstChars, 'MIIC') === 0) {
+            error_log("[ALIPAY] 使用 PKCS#1 格式 (RSA PRIVATE KEY)");
+            return "-----BEGIN RSA PRIVATE KEY-----\n" .
+                wordwrap($cleanKey, 64, "\n", true) .
+                "\n-----END RSA PRIVATE KEY-----";
+        }
+
+        // 默认使用 PKCS#8 格式 (PRIVATE KEY)
+        error_log("[ALIPAY] 使用 PKCS#8 格式 (PRIVATE KEY)");
+        return "-----BEGIN PRIVATE KEY-----\n" .
+            wordwrap($cleanKey, 64, "\n", true) .
+            "\n-----END PRIVATE KEY-----";
     }
 
 }
