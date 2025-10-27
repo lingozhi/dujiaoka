@@ -24,8 +24,8 @@ class AlipayController extends PayController
 
             $config = [
                 'app_id' => $this->payGateway->merchant_id,
-                'ali_public_key' => $this->payGateway->merchant_key,
-                'private_key' => $this->payGateway->merchant_pem,
+                'ali_public_key' => $this->formatPublicKey($this->payGateway->merchant_key),
+                'private_key' => $this->formatPrivateKey($this->payGateway->merchant_pem),
                 'notify_url' => url($this->payGateway->pay_handleroute . '/notify_url'),
                 'return_url' => url($this->payGateway->pay_handleroute . '/return_url') . '?orderSN=' . $this->order->order_sn,
                 'http' => [ // optional
@@ -113,8 +113,8 @@ class AlipayController extends PayController
         try {
             $config = [
                 'app_id' => $payGateway->merchant_id,
-                'ali_public_key' => $payGateway->merchant_key,
-                'private_key' => $payGateway->merchant_pem,
+                'ali_public_key' => $this->formatPublicKey($payGateway->merchant_key),
+                'private_key' => $this->formatPrivateKey($payGateway->merchant_pem),
             ];
 
             $pay = Pay::alipay($config);
@@ -234,8 +234,8 @@ class AlipayController extends PayController
 
         $config = [
             'app_id' => $payGateway->merchant_id,
-            'ali_public_key' => $payGateway->merchant_key,
-            'private_key' => $payGateway->merchant_pem,
+            'ali_public_key' => $this->formatPublicKey($payGateway->merchant_key),
+            'private_key' => $this->formatPrivateKey($payGateway->merchant_pem),
         ];
 
         \Log::info('支付宝回调配置', [
@@ -304,7 +304,7 @@ class AlipayController extends PayController
     }
 
     /**
-     * 格式化支付宝公钥
+     * 格式化支付宝公钥（添加 PEM 头尾）
      */
     private function formatPublicKey($key)
     {
@@ -312,7 +312,12 @@ class AlipayController extends PayController
             return $key;
         }
 
-        // 去除头尾标记和换行
+        // 如果已经有完整格式，直接返回
+        if (strpos($key, '-----BEGIN PUBLIC KEY-----') !== false) {
+            return $key;
+        }
+
+        // 去除可能存在的头尾标记和空白字符
         $key = str_replace([
             '-----BEGIN PUBLIC KEY-----',
             '-----END PUBLIC KEY-----',
@@ -321,14 +326,17 @@ class AlipayController extends PayController
             ' '
         ], '', $key);
 
-        // 添加标准头尾
-        return "-----BEGIN PUBLIC KEY-----\n" .
-            wordwrap($key, 64, "\n", true) .
+        // 每64字符换行
+        $keyLines = str_split($key, 64);
+        $formattedKey = "-----BEGIN PUBLIC KEY-----\n" .
+            implode("\n", $keyLines) .
             "\n-----END PUBLIC KEY-----";
+
+        return $formattedKey;
     }
 
     /**
-     * 格式化应用私钥
+     * 格式化应用私钥（添加 PEM 头尾）
      */
     private function formatPrivateKey($key)
     {
@@ -336,7 +344,12 @@ class AlipayController extends PayController
             return $key;
         }
 
-        // 去除所有头尾标记和换行
+        // 如果已经有完整格式，直接返回
+        if (strpos($key, '-----BEGIN') !== false) {
+            return $key;
+        }
+
+        // 去除可能存在的头尾标记和空白字符
         $cleanKey = str_replace([
             '-----BEGIN RSA PRIVATE KEY-----',
             '-----END RSA PRIVATE KEY-----',
@@ -347,26 +360,23 @@ class AlipayController extends PayController
             ' '
         ], '', $key);
 
-        // 判断密钥类型（通过前几个字符）
-        // PKCS#1: MIIEvQ, MIICXg, MIIE...
-        // PKCS#8: MIIEvg, MIIJQg...
+        // 判断密钥类型
+        // PKCS#1: 以 MIIEv, MIIC 等开头
+        // PKCS#8: 以 MIIEvg, MIIEvQ 等开头 (但实际上很难区分)
+        // 直接尝试 PKCS#8 格式 (BEGIN PRIVATE KEY)，这是更通用的格式
         $firstChars = substr($cleanKey, 0, 6);
-
         error_log("[ALIPAY] 私钥前6字符: {$firstChars}, 长度: " . strlen($cleanKey));
 
-        // 尝试 PKCS#1 格式 (RSA PRIVATE KEY)
-        if (strpos($firstChars, 'MIIEv') === 0 || strpos($firstChars, 'MIIC') === 0) {
-            error_log("[ALIPAY] 使用 PKCS#1 格式 (RSA PRIVATE KEY)");
-            return "-----BEGIN RSA PRIVATE KEY-----\n" .
-                wordwrap($cleanKey, 64, "\n", true) .
-                "\n-----END RSA PRIVATE KEY-----";
-        }
+        // 每64字符换行
+        $keyLines = str_split($cleanKey, 64);
 
-        // 默认使用 PKCS#8 格式 (PRIVATE KEY)
-        error_log("[ALIPAY] 使用 PKCS#8 格式 (PRIVATE KEY)");
-        return "-----BEGIN PRIVATE KEY-----\n" .
-            wordwrap($cleanKey, 64, "\n", true) .
+        // 默认使用 PKCS#8 格式
+        $formattedKey = "-----BEGIN PRIVATE KEY-----\n" .
+            implode("\n", $keyLines) .
             "\n-----END PRIVATE KEY-----";
+
+        error_log("[ALIPAY] 使用 PKCS#8 格式 (PRIVATE KEY)");
+        return $formattedKey;
     }
 
 }
