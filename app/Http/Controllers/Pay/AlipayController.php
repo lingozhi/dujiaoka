@@ -26,7 +26,7 @@ class AlipayController extends PayController
                 'ali_public_key' => $this->payGateway->merchant_key,
                 'private_key' => $this->payGateway->merchant_pem,
                 'notify_url' => url($this->payGateway->pay_handleroute . '/notify_url'),
-                'return_url' => url('detail-order-sn', ['orderSN' => $this->order->order_sn]),
+                'return_url' => url($this->payGateway->pay_handleroute . '/return_url', ['orderSN' => $this->order->order_sn]),
                 'http' => [ // optional
                     'timeout' => 10.0,
                     'connect_timeout' => 10.0,
@@ -70,6 +70,30 @@ class AlipayController extends PayController
         }
     }
 
+
+    /**
+     * 同步返回（用户支付完成后跳转）
+     */
+    public function returnUrl(Request $request)
+    {
+        $orderSN = $request->input('orderSN');
+
+        \Log::info('支付宝同步返回', [
+            'orderSN' => $orderSN,
+            'all_params' => $request->all()
+        ]);
+
+        // 如果没有订单号，尝试从支付宝参数中获取
+        if (!$orderSN) {
+            $orderSN = $request->input('out_trade_no');
+        }
+
+        // 延迟2秒，等待异步回调处理完成
+        sleep(2);
+
+        // 重定向到干净的订单详情页
+        return redirect()->to(url('detail-order-sn', ['orderSN' => $orderSN]));
+    }
 
     /**
      * 异步通知

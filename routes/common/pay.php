@@ -14,7 +14,8 @@ Route::get('pay-gateway/{handle}/{payway}/{orderSN}', 'PayController@redirectGat
 Route::group(['prefix' => 'pay', 'namespace' => 'Pay', 'middleware' => ['dujiaoka.pay_gate_way']], function () {
     // 支付宝
     Route::get('alipay/{payway}/{orderSN}', 'AlipayController@gateway');
-    Route::any('alipay/notify_url', 'AlipayController@notifyUrl');  // 支持GET和POST
+    Route::get('alipay/return_url', 'AlipayController@returnUrl');  // 同步返回
+    Route::any('alipay/notify_url', 'AlipayController@notifyUrl');  // 异步通知
     // 微信
     Route::get('wepay/{payway}/{orderSN}', 'WepayController@gateway');
     Route::post('wepay/notify_url', 'WepayController@notifyUrl');
