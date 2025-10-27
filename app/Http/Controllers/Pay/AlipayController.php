@@ -76,22 +76,83 @@ class AlipayController extends PayController
      */
     public function returnUrl(Request $request)
     {
-        $orderSN = $request->input('orderSN');
+        $orderSN = $request->input('orderSN') ?: $request->input('out_trade_no');
 
         \Log::info('支付宝同步返回', [
             'orderSN' => $orderSN,
             'all_params' => $request->all()
         ]);
 
-        // 如果没有订单号，尝试从支付宝参数中获取
         if (!$orderSN) {
-            $orderSN = $request->input('out_trade_no');
+            \Log::error('支付宝同步返回缺少订单号');
+            return redirect()->to(url('/'));
         }
 
-        // 延迟2秒，等待异步回调处理完成
-        sleep(2);
+        // 获取订单信息
+        $order = $this->orderService->detailOrderSN($orderSN);
+        if (!$order) {
+            \Log::error('支付宝同步返回订单不存在', ['orderSN' => $orderSN]);
+            return redirect()->to(url('/'));
+        }
 
-        // 重定向到干净的订单详情页
+        // 如果订单已完成，直接跳转
+        if ($order->status == \App\Models\Order::STATUS_COMPLETED) {
+            \Log::info('支付宝同步返回订单已完成', ['orderSN' => $orderSN]);
+            return redirect()->to(url('detail-order-sn', ['orderSN' => $orderSN]));
+        }
+
+        // 获取支付网关配置
+        $payGateway = $this->payService->detail($order->pay_id);
+        if (!$payGateway || $payGateway->pay_handleroute != '/pay/alipay') {
+            \Log::error('支付宝同步返回支付网关配置错误', ['order' => $order]);
+            return redirect()->to(url('detail-order-sn', ['orderSN' => $orderSN]));
+        }
+
+        // 尝试验证签名并处理订单
+        try {
+            $config = [
+                'app_id' => $payGateway->merchant_id,
+                'ali_public_key' => $payGateway->merchant_key,
+                'private_key' => $payGateway->merchant_pem,
+            ];
+
+            $pay = Pay::alipay($config);
+            $result = $pay->verify(); // 验证同步返回的签名
+
+            \Log::info('支付宝同步返回签名验证成功', [
+                'orderSN' => $orderSN,
+                'trade_no' => $result->trade_no ?? null,
+                'total_amount' => $result->total_amount ?? null
+            ]);
+
+            // 如果验证成功，完成订单
+            if (isset($result->out_trade_no) && isset($result->total_amount)) {
+                try {
+                    $this->orderProcessService->completedOrder(
+                        $result->out_trade_no,
+                        $result->total_amount,
+                        $result->trade_no ?? ''
+                    );
+                    \Log::info('支付宝同步返回订单处理成功', [
+                        'orderSN' => $orderSN,
+                        'amount' => $result->total_amount,
+                        'trade_no' => $result->trade_no ?? null
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::error('支付宝同步返回订单处理失败', [
+                        'orderSN' => $orderSN,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+        } catch (\Exception $exception) {
+            \Log::warning('支付宝同步返回签名验证失败', [
+                'orderSN' => $orderSN,
+                'error' => $exception->getMessage()
+            ]);
+        }
+
+        // 无论成功或失败，都重定向到订单详情页
         return redirect()->to(url('detail-order-sn', ['orderSN' => $orderSN]));
     }
 
