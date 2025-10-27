@@ -72,7 +72,7 @@ class CheckMailConfig extends Command
             $this->line('MAIL_PASSWORD=Y5H2MrTLzJfFUH0a');
             $this->line('MAIL_ENCRYPTION=ssl');
             $this->line('MAIL_FROM_ADDRESS=no-reply@opwan.ai');
-            $this->line('MAIL_FROM_NAME=独角数卡');
+            $this->line('MAIL_FROM_NAME=Claudex');
             return 1;
         }
     }

@@ -57,7 +57,7 @@ return [
 
     'from' => [
         'address' => env('MAIL_FROM_ADDRESS', 'no-reply@test.opwan.ai'),
-        'name' => env('MAIL_FROM_NAME', '独角数卡'),
+        'name' => env('MAIL_FROM_NAME', 'Claudex'),
     ],
 
     /*
